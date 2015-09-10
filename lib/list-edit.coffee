@@ -1,8 +1,6 @@
 {CompositeDisposable} = require 'atom'
 
-module.exports = ListEdit =
-  listEditView: null
-  modalPanel: null
+module.exports =
   subscriptions: null
 
   activate: (state) ->
@@ -13,9 +11,7 @@ module.exports = ListEdit =
     @subscriptions.add atom.commands.add 'atom-workspace', 'list-edit:select': => @select()
 
   deactivate: ->
-    @modalPanel.destroy()
     @subscriptions.dispose()
-    @listEditView.destroy()
 
   serialize: ->
     listEditViewState: @listEditView.serialize()
