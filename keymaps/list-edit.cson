@@ -8,4 +8,9 @@
 # For more detailed documentation see
 # https://atom.io/docs/latest/behind-atom-keymaps-in-depth
 'atom-workspace':
-  'cmd-alt-s': 'list-edit:select'
+  'alt-cmd-s': 'list-edit:select'
+  'alt-cmd-x': 'list-edit:cut'
+  'alt-cmd-c': 'list-edit:copy'
+  'alt-cmd-v': 'list-edit:paste'
+  # 'alt-cmd-d': 'list-edit:delete'
+  # TODO: 'alt-cmd-d' shows/hides dock on Mac OS X, find better keybinding

@@ -5,6 +5,22 @@
       'label': 'Select List Element'
       'command': 'list-edit:select'
     }
+    {
+      'label': 'Cut List Element'
+      'command': 'list-edit:cut'
+    }
+    {
+      'label': 'Copy List Element'
+      'command': 'list-edit:copy'
+    }
+    {
+      'label': 'Paste List Element'
+      'command': 'list-edit:paste'
+    }
+    {
+      'label': 'Delete List Element'
+      'command': 'list-edit:delete'
+    }
   ]
 'menu': [
   {
@@ -15,6 +31,22 @@
         {
           'label': 'Select List Element'
           'command': 'list-edit:select'
+        }
+        {
+          'label': 'Cut List Element'
+          'command': 'list-edit:cut'
+        }
+        {
+          'label': 'Copy List Element'
+          'command': 'list-edit:copy'
+        }
+        {
+          'label': 'Paste List Element'
+          'command': 'list-edit:paste'
+        }
+        {
+          'label': 'Delete List Element'
+          'command': 'list-edit:delete'
         }
       ]
     ]
