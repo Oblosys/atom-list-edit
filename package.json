@@ -1,0 +1,18 @@
+{
+  "name": "list-edit",
+  "main": "./lib/list-edit",
+  "version": "0.0.0",
+  "description": "A short description of your package",
+  "keywords": [
+  ],
+  "activationCommands": {
+    "atom-workspace": "list-edit:toggle"
+  },
+  "repository": "https://github.com/atom/list-edit",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+  }
+}
