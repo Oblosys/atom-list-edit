@@ -1,8 +1,8 @@
 {
   "name": "list-edit",
   "main": "./lib/list-edit",
-  "version": "0.0.0",
-  "description": "A short description of your package",
+  "version": "0.0.1",
+  "description": "Cut, copy & paste operations on list elements, which automatically handle whitespace and separators.",
   "keywords": [
   ],
   "activationCommands": {
