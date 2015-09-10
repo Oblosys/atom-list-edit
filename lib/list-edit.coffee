@@ -1,4 +1,4 @@
-{CompositeDisposable} = require 'atom'
+{CompositeDisposable, Range} = require 'atom'
 
 module.exports =
   subscriptions: null
@@ -23,6 +23,16 @@ module.exports =
 
   select: ->
     console.log 'Executing command list-edit-select'
+    editor = atom.workspace.getActiveTextEditor()
+    # TODO: add null check? (should always exist because we use 'atom-text-editor' command)
+
+    cursorPos = editor.getCursorBufferPosition()
+    console.log 'cursor row ' + cursorPos.row + ' col ' + cursorPos.column
+    bufferRange = @getListRange editor.getBuffer(), cursorPos
+    console.log bufferRange
+
+    if bufferRange?
+      editor.setSelectedBufferRange(bufferRange)
 
   cut: ->
     console.log 'Executing command list-edit-cut'
@@ -35,3 +45,25 @@ module.exports =
 
   delete: ->
     console.log 'Executing command list-edit-delete'
+
+  getListRange: (textBuffer, pos) ->
+    bufferText = textBuffer.getText()
+    ix =  textBuffer.characterIndexForPosition(pos)
+
+    listStartIx = null
+    listEndIx = null
+    console.log 'index is ' + ix + ', char is ' + bufferText[ix]
+    for i in [ix-1...0]
+      if bufferText[i] == '['
+        listStartIx = i+1
+        break
+    for i in [ix...bufferText.length-1]
+      if bufferText[i] == ']'
+        listEndIx = i
+        break
+
+    console.log 'list starts at ' + listStartIx
+    if listStartIx? and listEndIx?
+      listStartPos = textBuffer.positionForCharacterIndex listStartIx
+      listEndPos   = textBuffer.positionForCharacterIndex listEndIx
+      new Range(listStartPos, listEndPos)
