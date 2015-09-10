@@ -2,19 +2,19 @@
 'context-menu':
   'atom-text-editor': [
     {
-      'label': 'Toggle list-edit'
-      'command': 'list-edit:toggle'
+      'label': 'Select List Element'
+      'command': 'list-edit:select'
     }
   ]
 'menu': [
   {
     'label': 'Packages'
     'submenu': [
-      'label': 'list-edit'
+      'label': 'List Edit'
       'submenu': [
         {
-          'label': 'Toggle'
-          'command': 'list-edit:toggle'
+          'label': 'Select List Element'
+          'command': 'list-edit:select'
         }
       ]
     ]

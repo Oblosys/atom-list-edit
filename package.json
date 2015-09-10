@@ -6,7 +6,7 @@
   "keywords": [
   ],
   "activationCommands": {
-    "atom-workspace": "list-edit:toggle"
+    "atom-workspace": "list-edit:select"
   },
   "repository": "https://github.com/Oblosys/atom-list-edit",
   "license": "MIT",
