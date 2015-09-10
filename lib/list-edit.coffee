@@ -1,4 +1,3 @@
-ListEditView = require './list-edit-view'
 {CompositeDisposable} = require 'atom'
 
 module.exports = ListEdit =
@@ -7,9 +6,6 @@ module.exports = ListEdit =
   subscriptions: null
 
   activate: (state) ->
-    @listEditView = new ListEditView(state.listEditViewState)
-    @modalPanel = atom.workspace.addModalPanel(item: @listEditView.getElement(), visible: false)
-
     # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
     @subscriptions = new CompositeDisposable
 
@@ -26,8 +22,3 @@ module.exports = ListEdit =
 
   toggle: ->
     console.log 'ListEdit was toggled!'
-
-    if @modalPanel.isVisible()
-      @modalPanel.hide()
-    else
-      @modalPanel.show()
