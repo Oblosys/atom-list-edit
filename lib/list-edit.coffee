@@ -207,22 +207,26 @@ module.exports =
   isSeparator: (c) ->
     ',;:'.indexOf(c) != -1
 
-  # strings are tricky, as they can be mistakenly assumed to be open/close bracket
-  # e.g. '["Blinky", Inky, "Pinky"]' with cursor on Inky may recognize '", Inky ,"' as list
+  # Strings (using whitespace as separator) are tricky, as they can be mistakenly assumed to be open/close bracket
+  # e.g. '["Blinky", Inky, "Pinky"]' with cursor on Inky may recognize '", Inky ,"' as list.
+  # Disabled, as we also cannot use the same element/whitespace selection for strings with whitespace as separator.
+
+  # < .. > lists also tricky, as unbalanced < and > are quite common in code.
+  # Disabled for now, <> lists are not that prevalent anyway.
+
   # assumes c is character
   isOpeningBracket: (c) ->
-    '{[(<'.indexOf(c) != -1
+    '{[('.indexOf(c) != -1
 
   # assumes c is character
   isClosingBracket: (c) ->
-    '}])>'.indexOf(c) != -1
+    '}])'.indexOf(c) != -1
 
   getClosingBracketFor: (openingBracket) ->
     switch openingBracket
       when '{' then '}'
       when '[' then ']'
       when '(' then ')'
-      when '<' then '>'
       else console.error 'Unknown opening bracket \'' + openingBracket + '\''
 
   getOpeningBracketFor: (closingBracket) ->
@@ -230,7 +234,6 @@ module.exports =
       when '}' then '{'
       when ']' then '['
       when ')' then '('
-      when '>' then '<'
       else console.error 'Unknown closing bracket \'' + closingBracket + '\''
 
 # for testing in console:
