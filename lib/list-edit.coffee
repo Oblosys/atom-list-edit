@@ -25,6 +25,20 @@ module.exports =
 
   select: ->
     console.log 'Executing command list-edit-select'
+    editor = atom.workspace.getActiveTextEditor()
+    if editor?
+      cursorPos = editor.getCursorBufferPosition()
+      textBuffer = editor.getBuffer()
+      bufferText = textBuffer.getText()
+      cursorIx = textBuffer.characterIndexForPosition cursorPos
+
+      listIxRanges = @getListIxRanges bufferText, textBuffer.characterIndexForPosition cursorPos
+
+      if listIxRanges?
+        elementIndex = @getElementIndexInList listIxRanges, cursorIx
+        console.log 'elementIndex: ' + elementIndex
+        if elementIndex?
+          editor.setSelectedBufferRange(@getRangeForIxRange textBuffer, listIxRanges[elementIndex])
 
   cut: ->
     console.log 'Executing command list-edit-cut'
@@ -38,7 +52,7 @@ module.exports =
     textBuffer = editor.getBuffer()
     bufferText = textBuffer.getText()
 
-    listIxRanges = @getListIxRanges bufferText, textBuffer.characterIndexForPosition(cursorPos)
+    listIxRanges = @getListIxRanges bufferText, textBuffer.characterIndexForPosition cursorPos
 
     # Atom bug?
     # fn = textBuffer.positionForCharacterIndex
@@ -167,9 +181,24 @@ module.exports =
     console.log elementRanges
     elementRanges
 
+  # Return the index of the list element that cursorIx is part of
+  # NOTE: Range is inclusive also at the end, to let a cursor at the end of an element select that element.
+  getElementIndexInList: (listIxRanges, cursorIx) ->
+    index = 0
+    for range in listIxRanges
+      console.log index + ' ' + range[0] + ' ' + range[1]
+      return index if range[0] <= cursorIx && cursorIx <= range[1]
+      index++
+    return null
+
   showIxRanges: (bufferText, ranges) ->
     for ixRange in ranges
       console.log 'ixRange: '+ ixRange[0] + ' <-> ' + ixRange[1] + ': >>' + bufferText.substr(ixRange[0], ixRange[1] - ixRange[0]) + '<<'
+
+  # Convert index based range array [start, end] to row/column based Range
+  getRangeForIxRange: (textBuffer, ixRange) ->
+    new Range( (textBuffer.positionForCharacterIndex ixRange[0])
+             , (textBuffer.positionForCharacterIndex ixRange[1]) )
 
 
   # hacky first versions of bracket-character functions:
@@ -211,4 +240,4 @@ module.exports =
 # Some test lists:
 # [1,[1,2,[ ,, ]]]
 # [dsd,[kdd], "ddd"]
-# [ Blinky, Inky; [some, inner, nesting], Pinky,[ j] ,kjl, (1,2,3), jkj]
+# [ Blinky, Inky, [some, inner, nesting], Pinky,[ j] ,kjl, (1,2,3), jkj]
