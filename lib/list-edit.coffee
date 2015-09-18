@@ -42,6 +42,9 @@ module.exports =
 
   cut: ->
     console.log 'Executing command list-edit-cut'
+    #  1 elt:  remove, including whitespace
+    # >1 elts: if not last, remove, put pre whitespace on pre whitespace of next element
+    #         if last, put post whitespace on previous element
 
     # Not cut, but some test code to easily visualize ranges
     editor = atom.workspace.getActiveTextEditor()
@@ -74,9 +77,30 @@ module.exports =
   copy: ->
     console.log 'Executing command list-edit-copy'
 
+    # Select, strip whitespace and copy to clipboard
+
   paste: ->
     console.log 'Executing command list-edit-paste'
 
+    # On element, replace element with stripped clipboard, while preserving whitespace
+    #   1 elt,  make up bracket space, just use sep+' ' for now
+    # > 1 elts, before first element: newElt.whitespace = element[0].whitespace, element[0].whitespace.pre =element[1].whitespace.pre
+    #           after last element:   newElt.whitespace = element[n-1].whitespace, element[n-1].whitespace.post =element[n-2].whitespace.post
+    #           between i and i+1:    newElt.whitespace.pre = element[i+1].whitepace.pre, newElt.whitespace.post = element[i].whitepace.post
+    # maybe always using third rule and having special cases for i=0 and i = n-1 is elegant? (patching the existing elt's whitespace in those cases may make it less elegant)
+
+    # maybe declare bracketRightWhitespace bracketLeftWhitespace, separatorLeftWhitespace and separatorRightWhitespace
+    # and use those to format the necessary elements? Or maybe not, as explicit distinction may not be necessary
+
+    # for testing, use digits as whitespace
+
+    # need some function to determing if we're on the element, before, or after
+    # setPreWhitespace
+    # getPreWhitespace
+    #           patch next or previous element's whitespace
+
+    # [bracket-space-1ELTbracket-space2]
+    # [bracket-space-1ELTsep-space-1,sep-space-2ELTbracketspace2]
   delete: ->
     console.log 'Executing command list-edit-delete'
 
