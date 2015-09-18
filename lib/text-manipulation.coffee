@@ -1,3 +1,4 @@
+{Range, TextBuffer} = require 'atom'
 _ = require 'underscore-plus'
 
 
