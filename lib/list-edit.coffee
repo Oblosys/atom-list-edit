@@ -1,5 +1,6 @@
 {CompositeDisposable, Range, TextBuffer} = require 'atom'
 _ = require 'underscore-plus'
+TextManipulation = require './text-manipulation'
 
 
 module.exports =
