@@ -19,6 +19,7 @@ class ListElement
     @eltEnd = @end - @trailingWhitespace.length
     @strippedElement = bufferText.slice @eltStart, @eltEnd
 
+  # TODO: Override toString? Could be confusing.
   show: ->
     'ListElement: <' + @start + ' - ' + @end + '> ' +
       'stripped: <' + @eltStart + ' - ' + @eltEnd + '> : ' +
@@ -129,6 +130,22 @@ module.exports =
     console.log elementRanges
     elementRanges
 
+  # PRECONDITION: rangeStart <= rangeEnd
+  getSelectionForRange: (listElements, [rangeStart,rangeEnd]) ->
+    index = 0
+    while index < listElements.length
+      elt = listElements[index]
+      console.log 'getElementIndexInList, start: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      break if rangeStart <= elt.eltEnd
+      index++
+    selectionStart = index
+    while index < listElements.length
+      elt = listElements[index]
+      console.log 'getElementIndexInList, end:  ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      break if rangeEnd <= elt.eltEnd
+      index++
+    return [selectionStart, index]
+
   # Return the index of the list element that cursorIx is part of
   # NOTE: Range is inclusive also at the end, to let a cursor at the end of an element select that element.
   getElementIndexInList: (listElements, cursorIx) ->
@@ -143,10 +160,15 @@ module.exports =
     for ixRange in ranges
       console.log 'ixRange: '+ ixRange[0] + ' <-> ' + ixRange[1] + ': >>' + bufferText.substr(ixRange[0], ixRange[1] - ixRange[0]) + '<<'
 
-  # Convert index based range array [start, end] to row/column based Range
+  # Convert index-based range array [start, end] to row/column-based Range
   getRangeForIxRange: (textBuffer, ixRange) ->
     new Range( (textBuffer.positionForCharacterIndex ixRange[0])
              , (textBuffer.positionForCharacterIndex ixRange[1]) )
+
+  # Convert row/column-based Range to index-based range array [start, end]
+  getIxRangeForRange: (textBuffer, range) ->
+    [ (textBuffer.characterIndexForPosition range.start)
+    , (textBuffer.characterIndexForPosition range.end) ]
 
 
   # hacky first versions of bracket-character functions:

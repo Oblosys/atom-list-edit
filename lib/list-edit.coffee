@@ -28,21 +28,31 @@ module.exports =
     console.log 'Executing command list-edit-select'
     editor = atom.workspace.getActiveTextEditor()
     if editor?
-      cursorPos = editor.getCursorBufferPosition()
       textBuffer = editor.getBuffer()
       bufferText = textBuffer.getText()
-      cursorIx = textBuffer.characterIndexForPosition cursorPos
 
-      listElements = TextManipulation.getListElements bufferText, textBuffer.characterIndexForPosition cursorPos
+      selectionIxRange = TextManipulation.getIxRangeForRange textBuffer, (editor.getSelectedBufferRange())
+      listElements = TextManipulation.getListElements bufferText, selectionIxRange[0]
 
-      if listElements?
-        elementIndex = TextManipulation.getElementIndexInList listElements, cursorIx
-        elt = listElements[elementIndex]
-        console.log 'elementIndex: ' + elementIndex
-        if elementIndex?
-          console.log listElements[elementIndex]
-          console.log (TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd])
-          editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd])
+      if not listElements?
+        atom.notifications.addWarning 'List selection outside list.'
+      else
+        if listElements.length == 0
+          atom.notifications.addWarning 'List selection in empty list.'
+        else
+          [selStart,selEnd] = TextManipulation.getSelectionForRange listElements, selectionIxRange
+
+          if selEnd >= listElements.length
+            atom.notifications.addWarning 'List selection end outside list.'
+            # won't happen for start, since we use this to select the list in the first place
+            # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
+            #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
+          else
+            console.log 'selection: ' + selStart + ' <-> ' + selEnd
+            console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
+
+            editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
+                                          [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
 
   cut: ->
     console.log 'Executing command list-edit-cut'
