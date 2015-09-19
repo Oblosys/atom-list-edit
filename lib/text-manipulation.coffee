@@ -2,26 +2,26 @@
 _ = require 'underscore-plus'
 
 class ListElement
-  elementStartIx: 0
-  strippedElementStartIx: 0
-  strippedElementEndIx: 0
-  elementEndIx: 0
+  start: 0
+  eltStart: 0
+  eltEnd: 0
+  end: 0
   leadingWhitespace: ''
   strippedElement: ''
   trailingWhitespace: ''
 
   constructor: (bufferText, range) ->
-    [@elementStartIx, @elementEndIx] = range
-    element = bufferText.slice @elementStartIx, @elementEndIx
+    [@start, @end] = range
+    element = bufferText.slice @start, @end
     @leadingWhitespace  = (/^\s*/.exec(element) ? [''])[0]
     @trailingWhitespace = (/\s*$/.exec(element) ? [''])[0]
-    @strippedElementStartIx = @elementStartIx + @leadingWhitespace.length
-    @strippedElementEndIx = @elementEndIx - @trailingWhitespace.length
-    @strippedElement = bufferText.slice @strippedElementStartIx, @strippedElementEndIx
+    @eltStart = @start + @leadingWhitespace.length
+    @eltEnd = @end - @trailingWhitespace.length
+    @strippedElement = bufferText.slice @eltStart, @eltEnd
 
   show: ->
-    'ListElement: <' + @elementStartIx + ' - ' + @elementEndIx + '> ' +
-      'stripped: <' + @strippedElementStartIx + ' - ' + @strippedElementEndIx + '> : ' +
+    'ListElement: <' + @start + ' - ' + @end + '> ' +
+      'stripped: <' + @eltStart + ' - ' + @eltEnd + '> : ' +
       '"' + (if @strippedElement.length <= 8 then @strippedElement else
                 (@strippedElement.slice 0, 3) + '..' + (@strippedElement.slice -3)) + '"'
 
@@ -134,8 +134,8 @@ module.exports =
   getElementIndexInList: (listElements, cursorIx) ->
     index = 0
     for elt in listElements
-      console.log 'getElementIndexInList: ' + index + ' ' + elt.strippedElementStartIx + ' ' + elt.strippedElementEndIx
-      return index if elt.strippedElementStartIx <= cursorIx && cursorIx <= elt.strippedElementEndIx
+      console.log 'getElementIndexInList: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      return index if elt.eltStart <= cursorIx && cursorIx <= elt.eltEnd
       index++
     return null
 

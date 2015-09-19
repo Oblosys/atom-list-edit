@@ -86,20 +86,6 @@ describe 'TextManipulation', ->
       expect(TextManipulation.getListElements bufferText, 5)
         .toEqual( [] )
 
-                                          #  012 3 45678901 2 345
-      le = new TextManipulation.ListElement 'X,\n\t abc   \n\t, Y', [2,13]
-      console.log le.show()
-      le = new TextManipulation.ListElement ' abcdefgh           ', [0,15]
-      console.log le.show()
-      le = new TextManipulation.ListElement ' abcdefghi          ', [0,15]
-      console.log le.show()
-      f = (x) -> g x
-      # console.log (f 3)
-      g = (x) -> x+1
-      console.log (f 3)
-
-
-
 describe 'ListEdit', ->
   [workspaceElement, activationPromise] = []
 

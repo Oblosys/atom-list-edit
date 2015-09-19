@@ -41,8 +41,8 @@ module.exports =
         console.log 'elementIndex: ' + elementIndex
         if elementIndex?
           console.log listElements[elementIndex]
-          console.log (TextManipulation.getRangeForIxRange textBuffer, [elt.strippedElementStartIx, elt.strippedElementEndIx])
-          editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer, [elt.strippedElementStartIx, elt.strippedElementEndIx])
+          console.log (TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd])
+          editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd])
 
   cut: ->
     console.log 'Executing command list-edit-cut'
@@ -73,7 +73,7 @@ module.exports =
     # console.log (fn 2 ) #fails
 
     bufferRanges = _.map listElements, (elt) ->
-      TextManipulation.getRangeForIxRange textBuffer, [elt.strippedElementStartIx, elt.strippedElementEndIx]
+      TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd]
 
     console.log 'bufferRanges:'
     console.log bufferRanges
