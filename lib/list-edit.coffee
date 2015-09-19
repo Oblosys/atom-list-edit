@@ -33,16 +33,23 @@ module.exports =
       bufferText = textBuffer.getText()
       cursorIx = textBuffer.characterIndexForPosition cursorPos
 
-      listIxRanges = TextManipulation.getListIxRanges bufferText, textBuffer.characterIndexForPosition cursorPos
+      listElements = TextManipulation.getListElements bufferText, textBuffer.characterIndexForPosition cursorPos
 
-      if listIxRanges?
-        elementIndex = TextManipulation.getElementIndexInList listIxRanges, cursorIx
+      if listElements?
+        elementIndex = TextManipulation.getElementIndexInList listElements, cursorIx
+        elt = listElements[elementIndex]
         console.log 'elementIndex: ' + elementIndex
         if elementIndex?
-          editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer, listIxRanges[elementIndex])
+          console.log listElements[elementIndex]
+          console.log (TextManipulation.getRangeForIxRange textBuffer, [elt.strippedElementStartIx, elt.strippedElementEndIx])
+          editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer, [elt.strippedElementStartIx, elt.strippedElementEndIx])
 
   cut: ->
     console.log 'Executing command list-edit-cut'
+    # select
+    # copy
+    # delete
+
     #  1 elt:  remove, including whitespace
     # >1 elts: if not last, remove, put pre whitespace on pre whitespace of next element
     #         if last, put post whitespace on previous element
@@ -56,7 +63,7 @@ module.exports =
     textBuffer = editor.getBuffer()
     bufferText = textBuffer.getText()
 
-    listIxRanges = TextManipulation.getListIxRanges bufferText, textBuffer.characterIndexForPosition cursorPos
+    listElements = TextManipulation.getListElements bufferText, textBuffer.characterIndexForPosition cursorPos
 
     # Atom bug?
     # fn = textBuffer.positionForCharacterIndex
@@ -65,9 +72,8 @@ module.exports =
     # console.log (textBuffer.positionForCharacterIndex 2)
     # console.log (fn 2 ) #fails
 
-    bufferRanges =_.map listIxRanges, (ixRange) ->
-                    _.map ixRange, (ix) -> textBuffer.positionForCharacterIndex ix
-                                           # TODO: eta-reduce yields error, why?
+    bufferRanges = _.map listElements, (elt) ->
+      TextManipulation.getRangeForIxRange textBuffer, [elt.strippedElementStartIx, elt.strippedElementEndIx]
 
     console.log 'bufferRanges:'
     console.log bufferRanges
@@ -77,6 +83,8 @@ module.exports =
 
   copy: ->
     console.log 'Executing command list-edit-copy'
+    # select
+    # copy
 
     # Select, strip whitespace and copy to clipboard
 

@@ -1,10 +1,34 @@
 {Range, TextBuffer} = require 'atom'
 _ = require 'underscore-plus'
 
+class ListElement
+  elementStartIx: 0
+  strippedElementStartIx: 0
+  strippedElementEndIx: 0
+  elementEndIx: 0
+  leadingWhitespace: ''
+  strippedElement: ''
+  trailingWhitespace: ''
+
+  constructor: (bufferText, range) ->
+    [@elementStartIx, @elementEndIx] = range
+    element = bufferText.slice @elementStartIx, @elementEndIx
+    @leadingWhitespace  = (/^\s*/.exec(element) ? [''])[0]
+    @trailingWhitespace = (/\s*$/.exec(element) ? [''])[0]
+    @strippedElementStartIx = @elementStartIx + @leadingWhitespace.length
+    @strippedElementEndIx = @elementEndIx - @trailingWhitespace.length
+    @strippedElement = bufferText.slice @strippedElementStartIx, @strippedElementEndIx
+
+  show: ->
+    'ListElement: <' + @elementStartIx + ' - ' + @elementEndIx + '> ' +
+      'stripped: <' + @strippedElementStartIx + ' - ' + @strippedElementEndIx + '> : ' +
+      '"' + (if @strippedElement.length <= 8 then @strippedElement else
+                (@strippedElement.slice 0, 3) + '..' + (@strippedElement.slice -3)) + '"'
 
 module.exports =
-  getListIxRanges: (bufferText, ix) ->
+  ListElement: ListElement
 
+  getListElements: (bufferText, ix) ->
     res1 = @findMatchingOpeningBracket bufferText, ix, false
     res2 = @findMatchingClosingBracket bufferText, ix, false
 
@@ -26,7 +50,8 @@ module.exports =
       console.log 'elementRanges:'
       @showIxRanges bufferText, elementRanges
 
-      elementRanges
+      _.map elementRanges, (r) ->
+        new ListElement(bufferText, r)
     else
       return null
 
@@ -106,11 +131,11 @@ module.exports =
 
   # Return the index of the list element that cursorIx is part of
   # NOTE: Range is inclusive also at the end, to let a cursor at the end of an element select that element.
-  getElementIndexInList: (listIxRanges, cursorIx) ->
+  getElementIndexInList: (listElements, cursorIx) ->
     index = 0
-    for range in listIxRanges
-      console.log index + ' ' + range[0] + ' ' + range[1]
-      return index if range[0] <= cursorIx && cursorIx <= range[1]
+    for elt in listElements
+      console.log 'getElementIndexInList: ' + index + ' ' + elt.strippedElementStartIx + ' ' + elt.strippedElementEndIx
+      return index if elt.strippedElementStartIx <= cursorIx && cursorIx <= elt.strippedElementEndIx
       index++
     return null
 
