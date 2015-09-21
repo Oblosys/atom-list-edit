@@ -70,10 +70,23 @@ module.exports =
 
   copyCmd: ->
     console.log 'Executing command list-edit-copy'
-    # select
-    # copy
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements) ->
+      if listElements.length == 0
+        atom.notifications.addWarning 'List selection in empty list.'
+        # TODO: clear the clipboard here?
+      else
+        [selStart,selEnd] = TextManipulation.getSelectionForRange listElements, selectionIxRange
 
-    # Select, strip whitespace and copy to clipboard
+        # TODO: probably want to put this in withSelectedList
+        if selEnd >= listElements.length
+          atom.notifications.addWarning 'List selection end outside list.'
+          # won't happen for start, since we use this to select the list in the first place
+          # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
+          #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
+        else
+          selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd].eltEnd
+          #console.log "Copied: '#{selectionText}'"
+          atom.clipboard.write selectionText, @mkListEditMeta()
 
   pasteCmd: ->
     console.log 'Executing command list-edit-paste'
@@ -112,6 +125,12 @@ module.exports =
         atom.notifications.addWarning 'List selection outside list.'
       else
         (f.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements
+
+  mkListEditMeta: ->
+    {id: 'list-edit-clip-meta'}
+
+  getListEditMeta: (clip) ->
+    clip.metadata if clip?.metadata?.id == 'list-edit-clip-meta'
 
 
 # for testing in console:
