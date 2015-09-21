@@ -111,7 +111,7 @@ module.exports =
       if not listElements?
         atom.notifications.addWarning 'List selection outside list.'
       else
-        f editor, textBuffer, bufferText, selectionIxRange, listElements
+        (f.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements
 
 
 # for testing in console:
