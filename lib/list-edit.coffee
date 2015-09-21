@@ -12,11 +12,11 @@ module.exports =
 
     # Register package commands
     @subscriptions.add atom.commands.add 'atom-text-editor',
-      'list-edit:select': => @select()
-      'list-edit:cut':    => @cut()
-      'list-edit:copy':   => @copy()
-      'list-edit:paste':  => @paste()
-      'list-edit:delete': => @delete()
+      'list-edit:select': => @selectCmd()
+      'list-edit:cut':    => @cutCmd()
+      'list-edit:copy':   => @copyCmd()
+      'list-edit:paste':  => @pasteCmd()
+      'list-edit:delete': => @deleteCmd()
 
   deactivate: ->
     @subscriptions.dispose()
@@ -24,7 +24,7 @@ module.exports =
   serialize: ->
     listEditViewState: @listEditView.serialize()
 
-  select: ->
+  selectCmd: ->
     console.log 'Executing command list-edit-select'
     editor = atom.workspace.getActiveTextEditor()
     if editor?
@@ -54,7 +54,7 @@ module.exports =
             editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
                                           [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
 
-  cut: ->
+  cutCmd: ->
     console.log 'Executing command list-edit-cut'
     # select
     # copy
@@ -66,32 +66,31 @@ module.exports =
 
     # Not cut, but some test code to easily visualize ranges
     editor = atom.workspace.getActiveTextEditor()
-    # TODO: add null check? (should always exist because we use 'atom-text-editor' command)
+    if editor?
+      cursorPos = editor.getCursorBufferPosition()
+      console.log 'cursor row ' + cursorPos.row + ' col ' + cursorPos.column
+      textBuffer = editor.getBuffer()
+      bufferText = textBuffer.getText()
 
-    cursorPos = editor.getCursorBufferPosition()
-    console.log 'cursor row ' + cursorPos.row + ' col ' + cursorPos.column
-    textBuffer = editor.getBuffer()
-    bufferText = textBuffer.getText()
+      listElements = TextManipulation.getListElements bufferText, textBuffer.characterIndexForPosition cursorPos
 
-    listElements = TextManipulation.getListElements bufferText, textBuffer.characterIndexForPosition cursorPos
+      bufferRanges = _.map listElements, (elt) ->
+        TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd]
 
-    bufferRanges = _.map listElements, (elt) ->
-      TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd]
+      console.log 'bufferRanges:'
+      console.log bufferRanges
 
-    console.log 'bufferRanges:'
-    console.log bufferRanges
+      if bufferRanges? && bufferRanges.length > 0
+        editor.setSelectedBufferRanges(bufferRanges)
 
-    if bufferRanges? && bufferRanges.length > 0
-      editor.setSelectedBufferRanges(bufferRanges)
-
-  copy: ->
+  copyCmd: ->
     console.log 'Executing command list-edit-copy'
     # select
     # copy
 
     # Select, strip whitespace and copy to clipboard
 
-  paste: ->
+  pasteCmd: ->
     console.log 'Executing command list-edit-paste'
 
     # On element, replace element with stripped clipboard, while preserving whitespace
@@ -113,12 +112,17 @@ module.exports =
 
     # [bracket-space-1ELTbracket-space2]
     # [bracket-space-1ELTsep-space-1,sep-space-2ELTbracketspace2]
-  delete: ->
+  deleteCmd: ->
     console.log 'Executing command list-edit-delete'
 
 # for testing in console:
-# > atom.packages.activatePackage('list-edit')
+# Activation from console does not seem to work anymore: > atom.packages.activatePackage('list-edit')
+# Access active package (need to activate package manually first)
 # > atom.packages.activePackages['list-edit'].mainModule.<function>
+
+# Modules can be required for easily testing functions in console: (can be put in init.coffee)
+# edit = require ('/Users/martijn/git/atom-list-edit/lib/list-edit.coffee')
+# text = require ('/Users/martijn/git/atom-list-edit/lib/text-manipulation.coffee')
 
 # Some test lists:
 # [1,[1,2,[ ,, ]]]
