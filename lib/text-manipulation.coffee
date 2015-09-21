@@ -43,12 +43,10 @@ module.exports =
       # console.log 'rightIxRanges:'
       # @showIxRanges bufferText, rightIxRanges
 
-      console.log 'nonNestedIxRanges:'
       @showIxRanges bufferText, nonNestedIxRanges
 
       elementRanges = @getElementRanges bufferText, listStartIx, listEndIx, nonNestedIxRanges
 
-      console.log 'elementRanges:'
       @showIxRanges bufferText, elementRanges
 
       _.map elementRanges, (r) ->
