@@ -1,0 +1,27 @@
+[1,[1,2,[ ,, ]]]
+
+[dsd,[kdd], "ddd"]
+
+[ Blinky, Inky, [some, inner, nesting], Pinky,[ j] ,kjl, (1,2,3), jkj]
+
+m = do { action1
+       ; action2
+       ; action3
+       }
+
+mkTabbedView :: forall db . Typeable db => [(String, Maybe (EditM db ()), UntypedWebView db)] -> WebViewM db (WebView db (TabbedView db))
+mkTabbedView labelsEditActionsTabViews = mkWebView $
+ \vid (TabbedView selectedTab _ _) ->
+  do { let (labels, mEditActions,tabViews) = unzip3 labelsEditActionsTabViews
+
+     ; selectionViews <- sequence [ mkLinkView label $
+                                     do { viewEdit vid $
+                                            \((TabbedView _ sas twvs) :: TabbedView db) -> TabbedView i sas twvs
+                                        ; case mEditAction of
+                                            Nothing -> return ()
+                                            Just ea -> ea
+                                        }
+                                  | (i, label, mEditAction) <- zip3 [0..] labels mEditActions
+                                  ]
+     ; return $ TabbedView selectedTab selectionViews tabViews
+     }
