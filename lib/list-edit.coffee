@@ -75,13 +75,6 @@ module.exports =
 
     listElements = TextManipulation.getListElements bufferText, textBuffer.characterIndexForPosition cursorPos
 
-    # Atom bug?
-    # fn = textBuffer.positionForCharacterIndex
-    # console.log (textBuffer.positionForCharacterIndex)
-    # console.log (fn)
-    # console.log (textBuffer.positionForCharacterIndex 2)
-    # console.log (fn 2 ) #fails
-
     bufferRanges = _.map listElements, (elt) ->
       TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd]
 
