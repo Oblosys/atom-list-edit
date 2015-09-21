@@ -26,33 +26,23 @@ module.exports =
 
   selectCmd: ->
     console.log 'Executing command list-edit-select'
-    editor = atom.workspace.getActiveTextEditor()
-    if editor?
-      textBuffer = editor.getBuffer()
-      bufferText = textBuffer.getText()
-
-      selectionIxRange = TextManipulation.getIxRangeForRange textBuffer, (editor.getSelectedBufferRange())
-      listElements = TextManipulation.getListElements bufferText, selectionIxRange[0]
-
-      if not listElements?
-        atom.notifications.addWarning 'List selection outside list.'
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements) ->
+      if listElements.length == 0
+        atom.notifications.addWarning 'List selection in empty list.'
       else
-        if listElements.length == 0
-          atom.notifications.addWarning 'List selection in empty list.'
+        [selStart,selEnd] = TextManipulation.getSelectionForRange listElements, selectionIxRange
+
+        if selEnd >= listElements.length
+          atom.notifications.addWarning 'List selection end outside list.'
+          # won't happen for start, since we use this to select the list in the first place
+          # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
+          #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
         else
-          [selStart,selEnd] = TextManipulation.getSelectionForRange listElements, selectionIxRange
+          console.log 'selection: ' + selStart + ' <-> ' + selEnd
+          console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
 
-          if selEnd >= listElements.length
-            atom.notifications.addWarning 'List selection end outside list.'
-            # won't happen for start, since we use this to select the list in the first place
-            # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
-            #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
-          else
-            console.log 'selection: ' + selStart + ' <-> ' + selEnd
-            console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
-
-            editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
-                                          [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
+          editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
+                                        [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
 
   cutCmd: ->
     console.log 'Executing command list-edit-cut'
@@ -65,14 +55,9 @@ module.exports =
     #         if last, put post whitespace on previous element
 
     # Not cut, but some test code to easily visualize ranges
-    editor = atom.workspace.getActiveTextEditor()
-    if editor?
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements) ->
       cursorPos = editor.getCursorBufferPosition()
       console.log 'cursor row ' + cursorPos.row + ' col ' + cursorPos.column
-      textBuffer = editor.getBuffer()
-      bufferText = textBuffer.getText()
-
-      listElements = TextManipulation.getListElements bufferText, textBuffer.characterIndexForPosition cursorPos
 
       bufferRanges = _.map listElements, (elt) ->
         TextManipulation.getRangeForIxRange textBuffer, [elt.eltStart, elt.eltEnd]
@@ -114,6 +99,20 @@ module.exports =
     # [bracket-space-1ELTsep-space-1,sep-space-2ELTbracketspace2]
   deleteCmd: ->
     console.log 'Executing command list-edit-delete'
+
+  # Wrapper for easy access of common variables
+  withSelectedList: (f) ->
+    editor = atom.workspace.getActiveTextEditor()
+    if editor?
+      textBuffer = editor.getBuffer()
+      bufferText = textBuffer.getText()
+      selectionIxRange = TextManipulation.getIxRangeForRange textBuffer, (editor.getSelectedBufferRange())
+      listElements = TextManipulation.getListElements bufferText, selectionIxRange[0]
+      if not listElements?
+        atom.notifications.addWarning 'List selection outside list.'
+      else
+        f editor, textBuffer, bufferText, selectionIxRange, listElements
+
 
 # for testing in console:
 # Activation from console does not seem to work anymore: > atom.packages.activatePackage('list-edit')
