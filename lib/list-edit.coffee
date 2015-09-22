@@ -118,7 +118,6 @@ module.exports =
           # editor.setSelectedBufferRange cutRange # for debugging: select the range that will be cut
           textBuffer.setTextInRange cutRange, newWhitespace
 
-  # Store first pre, last post, one middle, and column of opening bracket for handling empty/one elt insertions (column is only for multi line lists)
   copyCmd: ->
     console.log 'Executing command list-edit-copy'
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements) ->
@@ -157,8 +156,6 @@ module.exports =
     #           between i and i+1:    newElt.whitespace.pre = element[i+1].whitepace.pre, newElt.whitespace.post = element[i].whitepace.post
     # maybe always using third rule and having special cases for i=0 and i = n-1 is elegant? (patching the existing elt's whitespace in those cases may make it less elegant)
 
-    # maybe declare bracketRightWhitespace bracketLeftWhitespace, separatorLeftWhitespace and separatorRightWhitespace
-    # and use those to format the necessary elements? Or maybe not, as explicit distinction may not be necessary
 
     # for testing, use digits as whitespace
 
@@ -184,6 +181,11 @@ module.exports =
         atom.notifications.addWarning 'List selection outside list.'
       else
         (f.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements
+
+  # TODO: store separator, so we can handle switching elements in list of two
+  # Maybe also store first pre (trailing opening bracket), last post (leading closing bracket), one middle post pre (leading, trailing separator),
+  # and column nr of opening bracket for handling empty/one elt insertions (column nr is only for multi line lists)
+
 
   mkListEditMeta: ->
     {id: 'list-edit-clip-meta'}
