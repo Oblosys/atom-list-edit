@@ -130,6 +130,7 @@ module.exports =
     elementRanges
 
   # PRECONDITION: rangeStart <= rangeEnd
+  # NOTE: selection does not include end, so selection [1,2] of [a,b,c,d] = [b]
   getSelectionForRange: (listElements, [rangeStart,rangeEnd]) ->
     index = 0
     while index < listElements.length
@@ -143,7 +144,7 @@ module.exports =
       # console.log 'getSelectionForRange, end:  ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
       break if rangeEnd <= elt.eltEnd
       index++
-    return [selectionStart, index]
+    return [selectionStart, index+1]
 
   # Return the index of the list element that cursorIx is part of
   # NOTE: Range is inclusive also at the end, to let a cursor at the end of an element select that element.

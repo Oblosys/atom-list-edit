@@ -32,7 +32,7 @@ module.exports =
       else
         [selStart,selEnd] = TextManipulation.getSelectionForRange listElements, selectionIxRange
 
-        if selEnd >= listElements.length
+        if selEnd > listElements.length
           atom.notifications.addWarning 'List selection end outside list.'
           # won't happen for start, since we use this to select the list in the first place
           # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
@@ -42,7 +42,7 @@ module.exports =
           console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
 
           editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
-                                        [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
+                                        [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
   cutCmd: ->
     console.log 'Executing command list-edit-cut'
@@ -78,13 +78,13 @@ module.exports =
         [selStart,selEnd] = TextManipulation.getSelectionForRange listElements, selectionIxRange
 
         # TODO: probably want to put this in withSelectedList
-        if selEnd >= listElements.length
+        if selEnd > listElements.length
           atom.notifications.addWarning 'List selection end outside list.'
           # won't happen for start, since we use this to select the list in the first place
           # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
           #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
         else
-          selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd].eltEnd
+          selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
           #console.log "Copied: '#{selectionText}'"
           atom.clipboard.write selectionText, @mkListEditMeta()
 
