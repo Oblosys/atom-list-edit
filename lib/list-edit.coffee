@@ -31,6 +31,7 @@ module.exports =
         atom.notifications.addWarning 'List selection in empty list.'
       else
         [selStart,selEnd] = TextManipulation.getSelectionForRange listElements, selectionIxRange
+        # TODO: handle empty selection? We currently cannot create this
 
         if selEnd > listElements.length
           atom.notifications.addWarning 'List selection end outside list.'
@@ -38,8 +39,10 @@ module.exports =
           # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
           #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
         else
-          console.log 'selection: ' + selStart + ' <-> ' + selEnd
-          console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd].eltEnd])
+          console.log 'List elements'
+          console.log e.show() for e in listElements
+          console.log 'Selection: ' + selStart + ' <-> ' + selEnd
+          console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
           editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
                                         [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
