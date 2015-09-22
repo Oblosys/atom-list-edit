@@ -10,6 +10,11 @@ m = do { action1
        ; action3
        }
 
+variation = {
+   action1;
+   action2
+ }
+
 mkTabbedView :: forall db . Typeable db => [(String, Maybe (EditM db ()), UntypedWebView db)] -> WebViewM db (WebView db (TabbedView db))
 mkTabbedView labelsEditActionsTabViews = mkWebView $
  \vid (TabbedView selectedTab _ _) ->
