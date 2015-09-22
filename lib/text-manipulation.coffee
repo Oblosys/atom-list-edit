@@ -29,6 +29,7 @@ class ListElement
 module.exports =
   ListElement: ListElement
 
+  # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
   getListElements: (bufferText, ix) ->
     res1 = @findMatchingOpeningBracket bufferText, ix, false
     res2 = @findMatchingClosingBracket bufferText, ix, false
@@ -43,11 +44,11 @@ module.exports =
       # console.log 'rightIxRanges:'
       # @showIxRanges bufferText, rightIxRanges
 
-      @showIxRanges bufferText, nonNestedIxRanges
+      # @showIxRanges bufferText, nonNestedIxRanges
 
       elementRanges = @getElementRanges bufferText, listStartIx, listEndIx, nonNestedIxRanges
 
-      @showIxRanges bufferText, elementRanges
+      # @showIxRanges bufferText, elementRanges
 
       _.map elementRanges, (r) ->
         new ListElement(bufferText, r)
@@ -112,7 +113,7 @@ module.exports =
 
     for nonNestedRange in nonNestedRanges
       [rangeStart, rangeEnd] = nonNestedRange
-      console.log 'range: ' + rangeStart + ' ' + rangeEnd
+      # console.log 'range: ' + rangeStart + ' ' + rangeEnd
       ix = rangeStart
 
       while ix < rangeEnd
@@ -125,7 +126,7 @@ module.exports =
         ix++
 
     elementRanges.push [elementStart, endIx] if elementStart != endIx
-    console.log elementRanges
+    # console.log elementRanges
     elementRanges
 
   # PRECONDITION: rangeStart <= rangeEnd
@@ -133,13 +134,13 @@ module.exports =
     index = 0
     while index < listElements.length
       elt = listElements[index]
-      console.log 'getElementIndexInList, start: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      # console.log 'getSelectionForRange, start: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
       break if rangeStart <= elt.eltEnd
       index++
     selectionStart = index
     while index < listElements.length
       elt = listElements[index]
-      console.log 'getElementIndexInList, end:  ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      # console.log 'getSelectionForRange, end:  ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
       break if rangeEnd <= elt.eltEnd
       index++
     return [selectionStart, index]
@@ -149,12 +150,13 @@ module.exports =
   getElementIndexInList: (listElements, cursorIx) ->
     index = 0
     for elt in listElements
-      console.log 'getElementIndexInList: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      # console.log 'getElementIndexInList: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
       return index if elt.eltStart <= cursorIx && cursorIx <= elt.eltEnd
       index++
     return null
 
   showIxRanges: (bufferText, ranges) ->
+    console.log 'showIxRanges:'
     for ixRange in ranges
       console.log 'ixRange: '+ ixRange[0] + ' <-> ' + ixRange[1] + ': >>' + bufferText.substr(ixRange[0], ixRange[1] - ixRange[0]) + '<<'
 
