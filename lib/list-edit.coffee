@@ -130,7 +130,7 @@ module.exports =
     console.log 'Executing command list-edit-delete'
 
   # Wrapper for easy access of common variables
-  withSelectedList: (f) ->
+  withSelectedList: (callback) ->
     editor = atom.workspace.getActiveTextEditor()
     if editor?
       textBuffer = editor.getBuffer()
@@ -150,7 +150,7 @@ module.exports =
             # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
             #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
           else
-            (f.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements, listSelection
+            (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements, listSelection
 
   # TODO: store separator, so we can handle switching elements in list of two
   # Maybe also store first pre (trailing opening bracket), last post (leading closing bracket), one middle post pre (leading, trailing separator),
