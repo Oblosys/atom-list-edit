@@ -68,7 +68,7 @@ module.exports =
 
         # @showIxRanges bufferText, nonNestedIxRanges
 
-        elementRanges = @getElementRanges bufferText, listStartIx, listEndIx, nonNestedIxRanges
+        elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
 
         # @showIxRanges bufferText, elementRanges
 
@@ -126,7 +126,10 @@ module.exports =
   addRange: (ranges, rangeStart, rangeEnd, isNested) ->
     ranges.push [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
 
-  getElementRanges: (bufferText, startIx, endIx, nonNestedRanges) ->
+  # Convert list of ranges that cover the entire list except its sublists, to ranges for its elements.
+  # The first separator encountered is expected to be the separator for the entire list.
+  getElementRangesFromNonNested: (bufferText, startIx, endIx, nonNestedRanges) ->
+    # By using nonNestedRanges, we can easily skip the sublists
     elementRanges = []
     elementStart = startIx
     separator = null
