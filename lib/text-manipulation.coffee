@@ -1,4 +1,4 @@
-{Range, TextBuffer} = require 'atom'
+{Range} = require 'atom'
 _ = require 'underscore-plus'
 
 class ListElement
@@ -30,30 +30,50 @@ module.exports =
   ListElement: ListElement
 
   # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
-  getListElements: (bufferText, ix) ->
-    res1 = @findMatchingOpeningBracket bufferText, ix, false
-    res2 = @findMatchingClosingBracket bufferText, ix, false
+  # TODO: Can make this even more powerful (and perhaps more vague?) by allowing
+  #       "[(1,>2),(3<,4)]" to select "[>(1,2),(3,4)<]". Currently, one of the ends need to be in the parent list.
+  getListElements: (bufferText, ixRange) ->
+    rangesToOpenForStart = @findMatchingOpeningBracket bufferText, ixRange[0], false
+    rangesToCloseForStart = @findMatchingClosingBracket bufferText, ixRange[0], false
 
-    if res1? && res2?
-      [listStartIx, leftIxRanges]  = res1
-      [listEndIx,   rightIxRanges] = res2
-      nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
+    rangesToOpenForEnd = @findMatchingOpeningBracket bufferText, ixRange[1], false
+    rangesToCloseForEnd = @findMatchingClosingBracket bufferText, ixRange[1], false
 
-      # console.log 'leftIxRanges:'
-      # @showIxRanges bufferText, leftIxRanges
-      # console.log 'rightIxRanges:'
-      # @showIxRanges bufferText, rightIxRanges
-
-      # @showIxRanges bufferText, nonNestedIxRanges
-
-      elementRanges = @getElementRanges bufferText, listStartIx, listEndIx, nonNestedIxRanges
-
-      # @showIxRanges bufferText, elementRanges
-
-      _.map elementRanges, (r) ->
-        new ListElement(bufferText, r)
-    else
+    if not (rangesToOpenForStart? and rangesToCloseForStart? and rangesToOpenForEnd? and rangesToCloseForEnd?)
+      # TODO: use error property to yield more specific error here?
       return null
+    else
+      startOpen = rangesToOpenForStart.bracketIx
+      startClose = rangesToCloseForStart.bracketIx
+      endOpen = rangesToOpenForEnd.bracketIx
+      endClose = rangesToCloseForEnd.bracketIx
+      console.log startOpen, startClose, endOpen, endClose
+      rangesToOpenAndClose = switch
+        when (startOpen == endOpen) and (startClose == endClose) or
+             (startOpen < endOpen)  and (startClose >  endClose) then [rangesToOpenForStart, rangesToCloseForStart]
+        when (endOpen < startOpen)  and (endClose >  startClose) then [rangesToOpenForEnd,   rangesToCloseForEnd]
+        else
+          # TODO: use error property to yield more specific error here?
+          null
+
+      if rangesToOpenAndClose?
+        [{bracketIx: listStartIx, ranges: leftIxRanges},
+         {bracketIx: listEndIx,   ranges: rightIxRanges}] = rangesToOpenAndClose
+        nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
+
+        # console.log 'leftIxRanges:'
+        # @showIxRanges bufferText, leftIxRanges
+        # console.log 'rightIxRanges:'
+        # @showIxRanges bufferText, rightIxRanges
+
+        # @showIxRanges bufferText, nonNestedIxRanges
+
+        elementRanges = @getElementRanges bufferText, listStartIx, listEndIx, nonNestedIxRanges
+
+        # @showIxRanges bufferText, elementRanges
+
+        _.map elementRanges, (r) ->
+          new ListElement(bufferText, r)
 
   findMatchingOpeningBracket: (bufferText, startIx, isNested, closingBracket) ->
     # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
@@ -66,13 +86,13 @@ module.exports =
       if (closingBracket? && (currentChar == @getOpeningBracketFor closingBracket)) ||
          @isOpeningBracket currentChar
         @addRange ranges, ix, rangeEnd, isNested
-        return [ix, ranges]
+        return {bracketIx: ix, ranges: ranges}
 
       if @isClosingBracket currentChar
         @addRange ranges, ix, rangeEnd, isNested
         res = @findMatchingOpeningBracket bufferText, ix-1, true, currentChar
         break if not res?
-        [ix, ...] = res
+        ix = res.bracketIx
         rangeEnd = ix-1
 
       ix--
@@ -90,13 +110,13 @@ module.exports =
       if (openingBracket? && (currentChar == @getClosingBracketFor openingBracket)) ||
          @isClosingBracket currentChar
         @addRange ranges, rangeStart, ix, isNested
-        return [ix, ranges]
+        return {bracketIx: ix, ranges: ranges}
 
       if @isOpeningBracket currentChar
         @addRange ranges, rangeStart, ix, isNested
         res = @findMatchingClosingBracket bufferText, ix+1, true, currentChar
         break if not res?
-        [ix, ...] = res
+        ix = res.bracketIx
         rangeStart = ix+1
 
       ix++
@@ -169,8 +189,8 @@ module.exports =
 
   # Convert index-based range array [start, end] to row/column-based Range
   getRangeForIxRange: (textBuffer, ixRange) ->
-    new Range( (textBuffer.positionForCharacterIndex ixRange[0])
-             , (textBuffer.positionForCharacterIndex ixRange[1]) )
+    new Range (textBuffer.positionForCharacterIndex ixRange[0]),
+              (textBuffer.positionForCharacterIndex ixRange[1])
 
   # Convert row/column-based Range to index-based range array [start, end]
   getIxRangeForRange: (textBuffer, range) ->

@@ -145,19 +145,14 @@ module.exports =
       textBuffer = editor.getBuffer()
       bufferText = textBuffer.getText()
       selectionIxRange = TextManipulation.getIxRangeForRange textBuffer, (editor.getSelectedBufferRange())
-      listElements = TextManipulation.getListElements bufferText, selectionIxRange[0]
+      listElements = TextManipulation.getListElements bufferText, selectionIxRange
       if not listElements?
-        atom.notifications.addWarning 'List selection outside list.'
+        atom.notifications.addWarning 'List-edit: Selection is not in well-formed list.'
       else
         listSelection = TextManipulation.getSelectionForRange listElements, selectionIxRange
         if listSelection.end > listElements.length
-          atom.notifications.addWarning 'List selection end outside list.'
-          # won't happen for start, since we use this to select the list in the first place
-          # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
-          #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
-          #       Requires slightly more complex selection algorithm where both start and end select a list
-          #       and the outermost one is chosen. The partial inner-list selection will simply cause inclusion
-          #       of its ancestor element in the outermost list
+          atom.notifications.addError 'List-edit: INTERNAL ERROR: list selection end outside list.'
+          # Note: Will not occur, just for easily signaling bugs during development.
         else
           (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements, listSelection
 
