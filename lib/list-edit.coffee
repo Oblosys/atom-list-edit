@@ -27,15 +27,17 @@ module.exports =
   selectCmd: ->
     console.log 'Executing command list-edit-select'
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [selStart,selEnd]) ->
-      # TODO: handle empty selection? We currently cannot create this
-      console.log 'List elements'
-      console.log e.show() for e in listElements
-      console.log 'Selection: ' + selStart + ' <-> ' + selEnd
-      console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
+      if listElements.length == 0
+        atom.notifications.addWarning 'List select in empty list.'
+      else
+        console.log 'List elements'
+        console.log e.show() for e in listElements
+        console.log 'Selection: ' + selStart + ' <-> ' + selEnd
+        console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
-      # TODO: on empty, expand selection?
-      editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
-                                    [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
+        # TODO: on empty, expand selection?
+        editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
+                                      [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
   cutCmd: ->
     console.log 'Executing command list-edit-cut'
@@ -58,48 +60,54 @@ module.exports =
     #      newElts[n-1].post = cutElts[m].post
 
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [cutStart, cutEnd]) ->
-      # TODO: refactor copy so we can call it here
-      console.log 'List elements'
-      console.log e.show() for e in listElements
-      console.log 'Selection: ' + cutStart + ' <-> ' + cutEnd
-
-      # copy selected elements to clipboard
-      selectionText = bufferText.slice listElements[cutStart].eltStart, listElements[cutEnd-1].eltEnd
-      atom.clipboard.write selectionText, @mkListEditMeta()
-
-      # elts[0 .. cutStart .. cutEnd .. n-1]
-      newLength = listElements.length - (cutEnd - cutStart) # +1 since cut range is inclusive
-      console.log newLength
-
-      # TODO: rewrite in terms of trailing opening bracket whitespace, leading closing whitespace, etc.
-      if newLength == 0
-        cutIxRange = [listElements[cutStart].start, listElements[cutEnd-1].end]
-        newWhitespace = ''
+      if listElements.length == 0
+        atom.notifications.addWarning 'List cut in empty list.'
       else
-        if cutStart == 0  # newLength > 0, so not the last one and no need to fix post (and elts[cutEnd] exists)
-          cutIxRange = [ listElements[0].start, listElements[cutEnd].eltStart ]
-          newWhitespace = listElements[0].leadingWhitespace  # newElts[0].pre = cutElts[0].pre
-        else # listElements[cutStart-1] exists
-          if cutEnd < listElements.length
-            cutIxRange = [ listElements[cutStart-1].end, listElements[cutEnd-1].end] # remove from preceding separator until post whitespace of last cut elt
-            newWhitespace = ''
-          else
-            cutIxRange = [ listElements[cutStart-1].eltEnd, listElements[cutEnd-1].end]
-            newWhitespace = listElements[cutEnd-1].trailingWhitespace   #newlistElements[n-1].post = cutElts[m].post
-      console.log 'cut index range:' + cutIxRange
-      console.log 'inserted: "' + newWhitespace + '"'
-      cutRange = TextManipulation.getRangeForIxRange textBuffer, cutIxRange
-      console.log cutRange.start
-      # editor.setSelectedBufferRange cutRange # for debugging: select the range that will be cut
-      textBuffer.setTextInRange cutRange, newWhitespace
+        # TODO: refactor copy so we can call it here
+        console.log 'List elements'
+        console.log e.show() for e in listElements
+        console.log 'Selection: ' + cutStart + ' <-> ' + cutEnd
+
+        # copy selected elements to clipboard
+        selectionText = bufferText.slice listElements[cutStart].eltStart, listElements[cutEnd-1].eltEnd
+        atom.clipboard.write selectionText, @mkListEditMeta()
+
+        # elts[0 .. cutStart .. cutEnd .. n-1]
+        newLength = listElements.length - (cutEnd - cutStart) # +1 since cut range is inclusive
+        console.log newLength
+
+        # TODO: rewrite in terms of trailing opening bracket whitespace, leading closing whitespace, etc.
+        if newLength == 0
+          cutIxRange = [listElements[cutStart].start, listElements[cutEnd-1].end]
+          newWhitespace = ''
+        else
+          if cutStart == 0  # newLength > 0, so not the last one and no need to fix post (and elts[cutEnd] exists)
+            cutIxRange = [ listElements[0].start, listElements[cutEnd].eltStart ]
+            newWhitespace = listElements[0].leadingWhitespace  # newElts[0].pre = cutElts[0].pre
+          else # listElements[cutStart-1] exists
+            if cutEnd < listElements.length
+              cutIxRange = [ listElements[cutStart-1].end, listElements[cutEnd-1].end] # remove from preceding separator until post whitespace of last cut elt
+              newWhitespace = ''
+            else
+              cutIxRange = [ listElements[cutStart-1].eltEnd, listElements[cutEnd-1].end]
+              newWhitespace = listElements[cutEnd-1].trailingWhitespace   #newlistElements[n-1].post = cutElts[m].post
+        console.log 'cut index range:' + cutIxRange
+        console.log 'inserted: "' + newWhitespace + '"'
+        cutRange = TextManipulation.getRangeForIxRange textBuffer, cutIxRange
+        console.log cutRange.start
+        # editor.setSelectedBufferRange cutRange # for debugging: select the range that will be cut
+        textBuffer.setTextInRange cutRange, newWhitespace
 
   copyCmd: ->
     console.log 'Executing command list-edit-copy'
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [selStart,selEnd]) ->
-      selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
-      # Clip includes separators, which seems logical when we use it for a non-list paste
-      #console.log "Copied: '#{selectionText}'"
-      atom.clipboard.write selectionText, @mkListEditMeta()
+      if listElements.length == 0
+        atom.notifications.addWarning 'List copy in empty list.'
+      else
+        selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
+        # Clip includes separators, which seems logical when we use it for a non-list paste
+        #console.log "Copied: '#{selectionText}'"
+        atom.clipboard.write selectionText, @mkListEditMeta()
 
   pasteCmd: ->
     console.log 'Executing command list-edit-paste'
@@ -138,21 +146,17 @@ module.exports =
       if not listElements?
         atom.notifications.addWarning 'List selection outside list.'
       else
-        if listElements.length == 0
-          atom.notifications.addWarning 'List selection in empty list.'
-          # TODO: not a failure for paste, remove from wrapper
+        listSelection = TextManipulation.getSelectionForRange listElements, selectionIxRange
+        if listSelection.end > listElements.length
+          atom.notifications.addWarning 'List selection end outside list.'
+          # won't happen for start, since we use this to select the list in the first place
+          # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
+          #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
+          #       Requires slightly more complex selection algorithm where both start and end select a list
+          #       and the outermost one is chosen. The partial inner-list selection will simply cause inclusion
+          #       of its ancestor element in the outermost list
         else
-          listSelection = TextManipulation.getSelectionForRange listElements, selectionIxRange
-          if listSelection.end > listElements.length
-            atom.notifications.addWarning 'List selection end outside list.'
-            # won't happen for start, since we use this to select the list in the first place
-            # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
-            #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
-            #       Requires slightly more complex selection algorithm where both start and end select a list
-            #       and the outermost one is chosen. The partial inner-list selection will simply cause inclusion
-            #       of its ancestor element in the outermost list
-          else
-            (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements, listSelection
+          (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements, listSelection
 
   # TODO: store separator, so we can handle switching elements in list of two
   # Maybe also store first pre (trailing opening bracket), last post (leading closing bracket), one middle post pre (leading, trailing separator),
