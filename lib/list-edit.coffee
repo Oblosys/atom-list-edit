@@ -37,7 +37,7 @@ module.exports =
 
         # TODO: on empty, expand selection?
         editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
-                                      [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
+                                        [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
   cutCmd: ->
     console.log 'Executing command list-edit-cut'
@@ -108,6 +108,9 @@ module.exports =
         # Clip includes separators, which seems logical when we use it for a non-list paste
         #console.log "Copied: '#{selectionText}'"
         atom.clipboard.write selectionText, @mkListEditMeta()
+        editor.setSelectedBufferRange (TextManipulation.getRangeForIxRange textBuffer,
+                                         [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
+
 
   pasteCmd: ->
     console.log 'Executing command list-edit-paste'
