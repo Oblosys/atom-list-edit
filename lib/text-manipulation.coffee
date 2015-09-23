@@ -47,7 +47,7 @@ module.exports =
       startClose = rangesToCloseForStart.bracketIx
       endOpen = rangesToOpenForEnd.bracketIx
       endClose = rangesToCloseForEnd.bracketIx
-      console.log startOpen, startClose, endOpen, endClose
+
       rangesToOpenAndClose = switch
         when (startOpen == endOpen) and (startClose == endClose) or
              (startOpen < endOpen)  and (startClose >  endClose) then [rangesToOpenForStart, rangesToCloseForStart]
