@@ -70,6 +70,9 @@ module.exports =
 
         elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
 
+        # Because empty elements are allowed, [\s*] will be interpreted as a list with single empty element
+        # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
+        elementRanges = [] if elementRanges.length == 1 and elementRanges[0].eltStart == elementRanges[0].eltEnd
         # @showIxRanges bufferText, elementRanges
 
         _.map elementRanges, (r) ->
