@@ -66,7 +66,6 @@ describe 'TextManipulation', ->
        .toEqual(null)
 
   describe 'getListElements', ->
-    #mkListElement = (
     #             01234567890123
     bufferText = '{1,([],2,3),4}'
 
@@ -93,6 +92,35 @@ describe 'TextManipulation', ->
     it 'should allow empty ranges at start and end', ->
       expect(TextManipulation.getListElements '[, ,]', [1,1])
         .toEqual(_.map [ [1,1], [2,3], [4,4] ], (r) -> new TextManipulation.ListElement '[, ,]', r)
+
+  describe 'getSelectionForRange', ->
+    #                                             1234567890123456789012345
+    listElts = TextManipulation.getListElements '[   Inky , Dinky , Pinky  ]', [1,1]
+
+    it 'should select a single element when selection is inside the element', ->
+      expect(TextManipulation.getSelectionForRange listElts, [5,5]).toEqual([0,1])
+
+    it 'should select multiple elements when selection starts and ends inside these elements', ->
+      expect(TextManipulation.getSelectionForRange listElts, [3,12]).toEqual([0,2])
+
+    it 'should select a single element when selection surrounds the element', ->
+      expect(TextManipulation.getSelectionForRange listElts, [3,9]).toEqual([0,1])
+
+    it 'should select a all elements when selection surrounds all elements', ->
+      expect(TextManipulation.getSelectionForRange listElts, [1,26]).toEqual([0,3])
+
+    it 'should select an empty range when selection is in leading whitespace', ->
+      expect(TextManipulation.getSelectionForRange listElts, [2,3]).toEqual([0,0])
+
+    it 'should select an empty range when selection is in trailing whitespace', ->
+      expect(TextManipulation.getSelectionForRange listElts, [24,25]).toEqual([3,3])
+
+    it 'should select an empty range when selection surrounds single separator', ->
+      expect(TextManipulation.getSelectionForRange listElts, [9,10]).toEqual([1,1])
+
+    it 'should select a single element when selection surrounds the element and adjoining separators', ->
+      expect(TextManipulation.getSelectionForRange listElts, [9,18]).toEqual([1,2])
+
 
 describe 'ListEdit', ->
   [workspaceElement, activationPromise] = []

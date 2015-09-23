@@ -170,19 +170,19 @@ module.exports =
   #       maybe startIsBeforeSep and endIsBeforeSep? and add an expandListSelection function?
   #       Not immediately necessary, it may even be possible that letting these selections include the extra element is confusing.
   getSelectionForRange: (listElements, [rangeStart,rangeEnd]) ->
-    index = 0
-    while index < listElements.length
-      elt = listElements[index]
-      # console.log 'getSelectionForRange, start: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
-      break if rangeStart <= elt.eltEnd
-      index++
-    selectionStart = index
-    while index < listElements.length
-      elt = listElements[index]
-      # console.log 'getSelectionForRange, end:  ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
-      break if rangeEnd <= elt.eltEnd
-      index++
-    return [selectionStart, index+1]
+    i = 0
+    while i < listElements.length
+      elt = listElements[i]
+      # console.log 'getSelectionForRange, start: ' + i + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      break if rangeStart < elt.eltEnd
+      i++
+    selectionStart = i
+    while i < listElements.length
+      elt = listElements[i]
+      # console.log 'getSelectionForRange, end:  ' + i + ' ' + elt.eltStart + ' ' + elt.eltEnd
+      break if rangeEnd <= elt.eltStart
+      i++
+    return [selectionStart, i]
 
   showIxRanges: (bufferText, ranges) ->
     console.log 'showIxRanges:'
