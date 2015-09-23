@@ -78,7 +78,7 @@ module.exports = TextManipulation =
 
         # Because empty elements are allowed, [\s*] will be interpreted as a list with single empty element
         # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
-        elementRanges = [] if elementRanges.length == 1 and elementRanges[0].eltStart == elementRanges[0].eltEnd
+        elementRanges = [] if elementRanges.length == 1 and elementRanges[0][0] == elementRanges[0][1]
         # @showIxRanges bufferText, elementRanges
 
         _.map elementRanges, (r) ->
@@ -187,7 +187,7 @@ module.exports = TextManipulation =
   showIxRanges: (bufferText, ranges) ->
     console.log 'showIxRanges:'
     for ixRange in ranges
-      console.log 'ixRange: '+ ixRange[0] + ' <-> ' + ixRange[1] + ': >>' + bufferText.substr(ixRange[0], ixRange[1] - ixRange[0]) + '<<'
+      console.log 'ixRange: ['+ ixRange[0] + ',' + ixRange[1] + '>:  >>' + bufferText.substr(ixRange[0], ixRange[1] - ixRange[0]) + '<<'
 
   # Convert index-based range array [start, end] to row/column-based Range
   getRangeForIxRange: (textBuffer, ixRange) ->
