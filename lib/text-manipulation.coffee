@@ -131,6 +131,12 @@ module.exports =
 
   # PRECONDITION: rangeStart <= rangeEnd
   # NOTE: selection does not include end, so selection [1,2] of [a,b,c,d] = [b]
+  # TODO: Allow empty selection when in whitespace
+  #        Maybe need booleans for distinguishing "one><, two"  "one, ><two" "one>, <two"
+  #       these are empty for paste, but we may interpret them as ">one<, two" "one, >two" and ">one, two<" for select, cut, and copy.
+  #       Not only for empty selections: ">one,< two" may be more intuitive as ">one, two<"
+  #       maybe startIsBeforeSep and endIsBeforeSep? and add an expandListSelection function?
+  #       Not immediately necessary, it may even be possible that letting these selections include the extra element is confusing.
   getSelectionForRange: (listElements, [rangeStart,rangeEnd]) ->
     index = 0
     while index < listElements.length

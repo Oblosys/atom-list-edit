@@ -33,6 +33,7 @@ module.exports =
       console.log 'Selection: ' + selStart + ' <-> ' + selEnd
       console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
+      # TODO: on empty, expand selection?
       editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
                                     [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
@@ -41,7 +42,7 @@ module.exports =
     # select
     # copy
     # delete
-
+    # TODO: clean up all these comments and put clear comments at actual code
     #  1 elt:  remove, including whitespace
     # >1 elts: if not last, remove, put pre whitespace on pre whitespace of next element
     #         if last, put post whitespace on previous element
@@ -70,6 +71,7 @@ module.exports =
       newLength = listElements.length - (cutEnd - cutStart) # +1 since cut range is inclusive
       console.log newLength
 
+      # TODO: rewrite in terms of trailing opening bracket whitespace, leading closing whitespace, etc.
       if newLength == 0
         cutIxRange = [listElements[cutStart].start, listElements[cutEnd-1].end]
         newWhitespace = ''
@@ -108,9 +110,10 @@ module.exports =
       # TODO: For now this is an error, but we can probably still do something with it in the future
     else
       console.log 'Clipboard contains list-edit clip'
-
-    # On element, replace element with stripped clipboard, while preserving whitespace
-    #   1 elt,  make up bracket space, just use sep+' ' for now
+    # On elements, replace element with stripped clipboard, while preserving whitespace (or use cut without setting clip (==delete)?)
+    # not on elements
+    #   0 elts, make up bracket space (later we can take it from the clip, possibly modifying it for different indentations (when copying from other lists))
+    #   1 elt,  make up sep space, just use sep+' ' for now (later we can take it from the clip, possibly modifying it for different indentations (when copying from other lists))
     # > 1 elts, before first element: newElt.whitespace = element[0].whitespace, element[0].whitespace.pre =element[1].whitespace.pre
     #           after last element:   newElt.whitespace = element[n-1].whitespace, element[n-1].whitespace.post =element[n-2].whitespace.post
     #           between i and i+1:    newElt.whitespace.pre = element[i+1].whitepace.pre, newElt.whitespace.post = element[i].whitepace.post
@@ -118,12 +121,7 @@ module.exports =
 
 
     # for testing, use digits as whitespace
-
-    # need some function to determing if we're on the element, before, or after
-    # setPreWhitespace
-    # getPreWhitespace
-    #           patch next or previous element's whitespace
-
+    # Write algorithm with trailing opening bracket whitespace, etc. Will make it easier to handle pasting from different lists.
     # [bracket-space-1ELTbracket-space2]
     # [bracket-space-1ELTsep-space-1,sep-space-2ELTbracketspace2]
   deleteCmd: ->
@@ -142,6 +140,7 @@ module.exports =
       else
         if listElements.length == 0
           atom.notifications.addWarning 'List selection in empty list.'
+          # TODO: not a failure for paste, remove from wrapper
         else
           listSelection = TextManipulation.getSelectionForRange listElements, selectionIxRange
           if listSelection.end > listElements.length
@@ -149,6 +148,9 @@ module.exports =
             # won't happen for start, since we use this to select the list in the first place
             # TODO: maybe make this less strict, as selection in sublists is now asymmetric:
             #       in "[1,[a,b],2]": "[a," selects entire sublist element, but ",b]" fails with warning.
+            #       Requires slightly more complex selection algorithm where both start and end select a list
+            #       and the outermost one is chosen. The partial inner-list selection will simply cause inclusion
+            #       of its ancestor element in the outermost list
           else
             (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements, listSelection
 
