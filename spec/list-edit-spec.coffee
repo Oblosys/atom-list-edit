@@ -71,7 +71,7 @@ describe 'TextManipulation', ->
     bufferText = '{1,([],2,3),4}'
 
     it 'should return null when there is no enclosing list', ->
-      expect(TextManipulation.getListElements bufferText, 0)
+      expect(TextManipulation.getListElements bufferText, [0,0])
         .toEqual(null)
 
     it 'should return the elements of the enclosing list even when index is immediately after opening tag', ->
@@ -85,6 +85,14 @@ describe 'TextManipulation', ->
     it 'should return the elements (i.e. []) of an empty list', ->
       expect(TextManipulation.getListElements bufferText, [5,5])
         .toEqual( [] )
+
+    it 'should allow empty ranges', ->
+      expect(TextManipulation.getListElements '[ ,, ]', [1,1])
+        .toEqual(_.map [ [1,2], [3,3], [4,5] ], (r) -> new TextManipulation.ListElement '[ ,, ]', r)
+
+    it 'should allow empty ranges at start and end', ->
+      expect(TextManipulation.getListElements '[, ,]', [1,1])
+        .toEqual(_.map [ [1,1], [2,3], [4,4] ], (r) -> new TextManipulation.ListElement '[, ,]', r)
 
 describe 'ListEdit', ->
   [workspaceElement, activationPromise] = []
