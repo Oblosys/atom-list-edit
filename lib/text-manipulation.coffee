@@ -144,11 +144,11 @@ module.exports =
           separator = bufferText[ix]
 
         if (separator? && bufferText[ix] == separator)
-          elementRanges.push [elementStart, ix] if elementStart != ix # TODO: empty check prob. not necessary
+          elementRanges.push [elementStart, ix]
           elementStart = ix+1
         ix++
 
-    elementRanges.push [elementStart, endIx] if elementStart != endIx
+    elementRanges.push [elementStart, endIx]
     # console.log elementRanges
     elementRanges
 
