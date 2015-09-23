@@ -172,16 +172,6 @@ module.exports =
       index++
     return [selectionStart, index+1]
 
-  # Return the index of the list element that cursorIx is part of
-  # NOTE: Range is inclusive also at the end, to let a cursor at the end of an element select that element.
-  getElementIndexInList: (listElements, cursorIx) ->
-    index = 0
-    for elt in listElements
-      # console.log 'getElementIndexInList: ' + index + ' ' + elt.eltStart + ' ' + elt.eltEnd
-      return index if elt.eltStart <= cursorIx && cursorIx <= elt.eltEnd
-      index++
-    return null
-
   showIxRanges: (bufferText, ranges) ->
     console.log 'showIxRanges:'
     for ixRange in ranges
