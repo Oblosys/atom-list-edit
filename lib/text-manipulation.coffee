@@ -40,23 +40,29 @@ module.exports =
     rangesToCloseForEnd = @findMatchingClosingBracket bufferText, ixRange[1], false
 
     if not (rangesToOpenForStart? and rangesToCloseForStart? and rangesToOpenForEnd? and rangesToCloseForEnd?)
-      # TODO: use error property to yield more specific error here?
       return null
+      # TODO: use error property to yield more specific error here?
     else
       startOpen = rangesToOpenForStart.bracketIx
       startClose = rangesToCloseForStart.bracketIx
       endOpen = rangesToOpenForEnd.bracketIx
       endClose = rangesToCloseForEnd.bracketIx
+      if (bufferText[startClose] != @getClosingBracketFor bufferText[startOpen-1]) or
+         (bufferText[endClose] != @getClosingBracketFor bufferText[endOpen-1])
+        return null # opening and closing brackets don't match: list is not well formed
+        # TODO: use error property to yield more specific error here?
 
       rangesToOpenAndClose = switch
         when (startOpen == endOpen) and (startClose == endClose) or
              (startOpen < endOpen)  and (startClose >  endClose) then [rangesToOpenForStart, rangesToCloseForStart]
         when (endOpen < startOpen)  and (endClose >  startClose) then [rangesToOpenForEnd,   rangesToCloseForEnd]
         else
-          # TODO: use error property to yield more specific error here?
           null
 
-      if rangesToOpenAndClose?
+      if not rangesToOpenAndClose?
+        return null
+        # TODO: use error property to yield more specific error here?
+      else
         [{bracketIx: listStartIx, ranges: leftIxRanges},
          {bracketIx: listEndIx,   ranges: rightIxRanges}] = rangesToOpenAndClose
         nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
