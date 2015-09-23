@@ -39,15 +39,15 @@ describe 'TextManipulation', ->
       #             012345678901
       bufferText = '[1,[1,2,[]]]'
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 11, false)
-       .toEqual([1, [ [1,3] ]])
+       .toEqual({bracketIx: 1, ranges: [ [1,3] ]})
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 10, false)
-       .toEqual([4, [ [4,8] ]])
+       .toEqual({bracketIx: 4, ranges: [ [4,8] ]})
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 9, false)
-       .toEqual([9, [  ]])
+       .toEqual({bracketIx: 9, ranges: [  ]})
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 8, false)
-       .toEqual([4, [ [4,8] ]])
+       .toEqual({bracketIx: 4, ranges: [ [4,8] ]})
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 1, false)
-       .toEqual([1, [  ]])
+       .toEqual({bracketIx: 1, ranges: [  ]})
 
   describe 'findMatchingClosingBracket', ->
     # TODO: split into separate 'it' clauses
@@ -55,13 +55,13 @@ describe 'TextManipulation', ->
       #             01234567890123
       bufferText = '[1,[[],2,3],4]'
       expect(TextManipulation.findMatchingClosingBracket bufferText, 1, false)
-       .toEqual([13, [ [1,3], [11,13] ]])
+       .toEqual({bracketIx: 13, ranges: [ [1,3], [11,13] ]})
       expect(TextManipulation.findMatchingClosingBracket bufferText, 3, false)
-       .toEqual([13, [ [11,13] ]])
+       .toEqual({bracketIx: 13, ranges: [ [11,13] ]})
       expect(TextManipulation.findMatchingClosingBracket bufferText, 4, false)
-       .toEqual([10, [ [6,10] ]])
+       .toEqual({bracketIx: 10, ranges: [ [6,10] ]})
       expect(TextManipulation.findMatchingClosingBracket bufferText, 11, false)
-       .toEqual([13, [ [11,13] ]])
+       .toEqual({bracketIx: 13, ranges: [ [11,13] ]})
       expect(TextManipulation.findMatchingClosingBracket bufferText, 0, false)
        .toEqual(null)
 
@@ -75,15 +75,15 @@ describe 'TextManipulation', ->
         .toEqual(null)
 
     it 'should return the elements of the enclosing list even when index is immediately after opening tag', ->
-      expect(TextManipulation.getListElements bufferText, 1)
+      expect(TextManipulation.getListElements bufferText, [1,1])
         .toEqual(_.map [ [1,2], [3,11], [12,13] ], (r) -> new TextManipulation.ListElement bufferText, r)
 
     it 'should return the elements of a nested list', ->
-      expect(TextManipulation.getListElements bufferText, 4)
+      expect(TextManipulation.getListElements bufferText, [4,4])
         .toEqual(_.map [ [4,6], [7,8], [9,10] ], (r) -> new TextManipulation.ListElement bufferText, r)
 
     it 'should return the elements (i.e. []) of an empty list', ->
-      expect(TextManipulation.getListElements bufferText, 5)
+      expect(TextManipulation.getListElements bufferText, [5,5])
         .toEqual( [] )
 
 describe 'ListEdit', ->
