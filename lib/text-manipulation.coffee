@@ -13,8 +13,8 @@ class ListElement
   constructor: (bufferText, range) ->
     [@start, @end] = range
     element = bufferText.slice @start, @end
-    @leadingWhitespace  = (/^\s*/.exec(element) ? [''])[0]
-    @trailingWhitespace = (/\s*$/.exec(element) ? [''])[0]
+    @leadingWhitespace  = TextManipulation.getLeadingWhitespace(element)
+    @trailingWhitespace = TextManipulation.getTrailingWhitespace(element)
     @eltStart = @start + @leadingWhitespace.length
     @eltEnd = @end - @trailingWhitespace.length
     @strippedElement = bufferText.slice @eltStart, @eltEnd
@@ -26,7 +26,7 @@ class ListElement
       '"' + (if @strippedElement.length <= 8 then @strippedElement else
                 (@strippedElement.slice 0, 3) + '..' + (@strippedElement.slice -3)) + '"'
 
-module.exports =
+module.exports = TextManipulation =
   ListElement: ListElement
 
   # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
@@ -235,8 +235,14 @@ module.exports =
       when ')' then '('
       else console.error 'Unknown closing bracket \'' + closingBracket + '\''
 
-  stripLeadingWhitespace: (source) ->
-    source.replace(/^\s+/, '')
+  getLeadingWhitespace: (text) ->
+    (/^\s*/.exec(text) ? [''])[0]
 
-  stripTrailingWhitespace: (source) ->
-    source.replace(/\s+$/, '')
+  getTrailingWhitespace: (text) ->
+    (/\s*$/.exec(text) ? [''])[0]
+
+  stripLeadingWhitespace: (text) ->
+    text.replace(/^\s+/, '')
+
+  stripTrailingWhitespace: (text) ->
+    text.replace(/\s+$/, '')
