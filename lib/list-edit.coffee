@@ -32,7 +32,7 @@ module.exports =
       else
         console.log 'List elements'
         console.log e.show() for e in listElements
-        console.log 'Selection: ' + selStart + ' <-> ' + selEnd
+        console.log "Selection: [#{selStart},#{selEnd}>"
         if selStart == selEnd
           atom.notifications.addWarning 'Empty list selection.'
           # TODO: on empty, expand selection?
@@ -73,7 +73,7 @@ module.exports =
         else
           console.log 'List elements'
           console.log e.show() for e in listElements
-          console.log 'Selection: ' + cutStart + ' <-> ' + cutEnd
+          console.log "Selection: [#{cutStart},#{cutEnd}>"
 
           # copy selected elements to clipboard
           selectionText = bufferText.slice listElements[cutStart].eltStart, listElements[cutEnd-1].eltEnd
@@ -84,7 +84,7 @@ module.exports =
           console.log newLength
 
           # TODO: rewrite in terms of trailing opening bracket whitespace, leading closing whitespace, etc.
-          if newLength == 0
+          if newLength == 0 # [ >ELT, .. ,ELT< ]
             cutIxRange = [listElements[cutStart].start, listElements[cutEnd-1].end]
             newWhitespace = ''
           else
@@ -92,12 +92,12 @@ module.exports =
               cutIxRange = [ listElements[0].start, listElements[cutEnd].eltStart ]
               newWhitespace = listElements[0].leadingWhitespace  # newElts[0].pre = cutElts[0].pre
             else # listElements[cutStart-1] exists
-              if cutEnd < listElements.length
-                cutIxRange = [ listElements[cutStart-1].end, listElements[cutEnd-1].end] # remove from preceding separator until post whitespace of last cut elt
-                newWhitespace = ''
-              else
+              if cutEnd == listElements.length # last element, so cut including remaining elt's trailing whitespace and replace that by closing bracket whitespace
                 cutIxRange = [ listElements[cutStart-1].eltEnd, listElements[cutEnd-1].end]
                 newWhitespace = listElements[cutEnd-1].trailingWhitespace   #newlistElements[n-1].post = cutElts[m].post
+              else # neither first nor last element are cut
+                cutIxRange = [ listElements[cutStart-1].end, listElements[cutEnd-1].end] # remove from preceding separator until post whitespace of last cut elt
+                newWhitespace = ''
           console.log 'cut index range:' + cutIxRange
           console.log 'inserted: "' + newWhitespace + '"'
           cutRange = TextManipulation.getRangeForIxRange textBuffer, cutIxRange
@@ -126,12 +126,65 @@ module.exports =
     console.log 'Executing command list-edit-paste'
     clip = atom.clipboard.readWithMetadata()
     clipMeta = @getListEditMeta clip
-    if not clipMeta
+    if false # not clipMeta
       atom.notifications.addError 'Clipboard does not contain list-edit clip.'
-      # TODO: For now this is an error, but we can probably still do something with it in the future
+      # TODO: For now this is an error, but we can probably still do something with it in the future (maybe simply strip whitespace and paste)
     else
-      console.log 'Clipboard contains list-edit clip'
-    # On elements, replace element with stripped clipboard, while preserving whitespace (or use cut without setting clip (==delete)?)
+      # TODO: For now assume clipboard comes from the same list as paste target
+      @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [selStart,selEnd]) ->
+        console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
+        if selStart != selEnd
+          # if an element or a range is selected, all surrounding whitespace can be left untouched
+          # (assuming the clip comes from the same list)
+          pasteIxRange = [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd]
+          pasteText = clip.text
+        else
+          # empty target range
+          if listElements.length == 0
+            console.log 'Paste in empty list'
+            pasteIxRange = [0,0] # TODO: need list start and end [listStart, listEnd]
+            pasteText = ' ' + clip.text + ' '
+          else
+            console.log 'Paste on non-empty list'
+            if selStart == 0
+              console.log '  before list start'
+              pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
+              if listElements.length > 1
+                separator = bufferText[listElements[selStart+1].end] # TODO: get this from a ListElement object
+                sepLeadingWhitespace = listElements[selStart].trailingWhitespace
+                sepTrailingWhitespace = listElements[selStart+1].leadingWhitespace
+              else
+                separator = '|'              # TODO: Use heuristic to guess these
+                sepLeadingWhitespace = '__'  #
+                sepTrailingWhitespace = '__' #
+              pasteText = clip.text + sepLeadingWhitespace + separator + sepTrailingWhitespace
+
+            else if selStart == listElements.length
+              console.log '  after list end'
+              pasteIxRange = [listElements[selStart-1].eltEnd,listElements[selStart-1].eltEnd] # immediately in after of preceding element
+              if listElements.length > 1
+                separator = bufferText[listElements[selStart-2].end] # TODO: get this from a ListElement object
+                sepLeadingWhitespace = listElements[selStart-2].trailingWhitespace
+                sepTrailingWhitespace = listElements[selStart-1].leadingWhitespace
+              else
+                separator = '|'
+                sepLeadingWhitespace = '__'
+                sepTrailingWhitespace = '__'
+
+              pasteText = sepLeadingWhitespace + separator + sepTrailingWhitespace + clip.text
+            else
+              console.log '  between start and end (list len > 1)'
+              separator = bufferText[listElements[selStart-1].end] # TODO: get this from a ListElement object
+              sepLeadingWhitespace = listElements[selStart-1].trailingWhitespace
+              sepTrailingWhitespace = listElements[selStart].leadingWhitespace
+              pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
+
+              pasteText = clip.text + sepLeadingWhitespace + separator + sepTrailingWhitespace
+
+        pasteRange = TextManipulation.getRangeForIxRange textBuffer, pasteIxRange
+        textBuffer.setTextInRange pasteRange, pasteText
+        editor.setCursorBufferPosition (textBuffer.positionForCharacterIndex pasteIxRange[0] + pasteText.length)
+
     # not on elements
     #   0 elts, make up bracket space (later we can take it from the clip, possibly modifying it for different indentations (when copying from other lists))
     #   1 elt,  make up sep space, just use sep+' ' for now (later we can take it from the clip, possibly modifying it for different indentations (when copying from other lists))
