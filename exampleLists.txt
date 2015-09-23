@@ -1,6 +1,8 @@
 [  one, two, three, four  ]
 [1,[1,2,[ ,, ]]]
 
+[ ( x ] ] -- TODO: Selection at x should give an error
+
 [dsd,[kdd], "ddd"]
 
 [ Blinky, Inky, [some, inner, nesting], Pinky,[ j] ,kjl, (1,2,3), jkj]
