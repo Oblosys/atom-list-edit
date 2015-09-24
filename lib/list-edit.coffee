@@ -62,7 +62,7 @@ module.exports =
     #    if cut == newElts.length # newElts.length > 1, so newElts[n-1] exists, not first and no need to fix pre
     #      newElts[n-1].post = cutElts[m].post
 
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {sep: separator, elts: listElements}, [cutStart, cutEnd]) ->
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {openBracket: openBracket, sep: separator, elts: listElements}, [cutStart, cutEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List cut in empty list.'
       else
@@ -77,7 +77,7 @@ module.exports =
 
           # copy selected elements to clipboard
           selectionText = bufferText.slice listElements[cutStart].eltStart, listElements[cutEnd-1].eltEnd
-          atom.clipboard.write selectionText, @mkListEditMeta(separator)
+          atom.clipboard.write selectionText, @mkListEditMeta(openBracket, separator)
 
           if cutStart == 0
             if cutEnd == listElements.length
@@ -107,7 +107,7 @@ module.exports =
 
   copyCmd: ->
     console.log 'Executing command list-edit-copy'
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {sep: separator, elts: listElements}, [selStart,selEnd]) ->
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {openBracket: openBracket, sep: separator, elts: listElements}, [selStart,selEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List copy in empty list.'
       else
@@ -118,7 +118,7 @@ module.exports =
           selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
           # Clip includes separators, which seems logical when we use it for a non-list paste
           #console.log "Copied: '#{selectionText}'"
-          atom.clipboard.write selectionText, @mkListEditMeta(separator)
+          atom.clipboard.write selectionText, @mkListEditMeta(openBracket, separator)
           editor.setSelectedBufferRange (TextManipulation.getRangeForIxRange textBuffer,
                                            [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
@@ -132,10 +132,13 @@ module.exports =
     else
       # TODO: For now assume clipboard comes from the same list as paste target
       @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
-        {startIx: listStartIx, endIx: listEndIx, sep: separator, elts: listElements} = elementList
+        {startIx: listStartIx, endIx: listEndIx, openBracket: openBracket, sep: separator, elts: listElements} = elementList
         console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
-
-        separator ?=  clipMeta.sep ? '<defaultSeparator>'
+        console.log "Opening bracket: #{openBracket}, separator: #{separator}"
+        separator ?= if clipMeta.openBracket == openBracket and clipMeta.sep
+                       clipMeta.sep # Use separator from clipboard only if it comes from a list with equal brackets
+                     else
+                       TextManipulation.getDefaultSeparatorFor openBracket
 
         if selStart != selEnd
           # if an element or a range is selected, all surrounding whitespace can be left untouched
@@ -224,8 +227,8 @@ module.exports =
   # and column nr of opening bracket for handling empty/one elt insertions (column nr is only for multi line lists)
 
 
-  mkListEditMeta: (separator) ->
-    {id: 'list-edit-clip-meta', sep: separator}
+  mkListEditMeta: (openBracket, separator) ->
+    {id: 'list-edit-clip-meta', openBracket: openBracket, sep: separator}
 
   getListEditMeta: (clip) ->
     clip.metadata if clip?.metadata?.id == 'list-edit-clip-meta'
