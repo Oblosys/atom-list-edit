@@ -1,9 +1,9 @@
 [  one, two, three, four  ]
 [1,[1,2,[ ,, ]]]
-[ ]
+[   ]
 [ one ]
-[ ( x ] ]
-
+[ ( x ] )
+( one, two )
 [dsd,[kdd], "ddd"]
 
 [ Blinky, Inky, [some, inner, nesting], Pinky,[ j] ,kjl, (1,2,3), jkj]
@@ -22,7 +22,6 @@ mkTabbedView :: forall db . Typeable db => [(String, Maybe (EditM db ()), Untype
 mkTabbedView labelsEditActionsTabViews = mkWebView $
  \vid (TabbedView selectedTab _ _) ->
   do { let (labels, mEditActions,tabViews) = unzip3 labelsEditActionsTabViews
-
      ; selectionViews <- sequence [ mkLinkView label $
                                      do { viewEdit vid $
                                             \((TabbedView _ sas twvs) :: TabbedView db) -> TabbedView i sas twvs
@@ -34,3 +33,9 @@ mkTabbedView labelsEditActionsTabViews = mkWebView $
                                   ]
      ; return $ TabbedView selectedTab selectionViews tabViews
      }
+
+tricky =   -- copy action3 to before action1: empty lines will also be around newly inserted separator
+ { action1
+
+ ; action3
+ }
