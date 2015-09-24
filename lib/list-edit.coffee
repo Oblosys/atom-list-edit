@@ -44,24 +44,6 @@ module.exports =
 
   cutCmd: ->
     console.log 'Executing command list-edit-cut'
-    # select
-    # copy
-    # delete
-    # TODO: clean up all these comments and put clear comments at actual code
-    #  1 elt:  remove, including whitespace
-    # >1 elts: if not last, remove, put pre whitespace on pre whitespace of next element
-    #         if last, put post whitespace on previous element
-    # [pre1ELT1post1,pre2ELT2post2,pre3ELT3post3]
-    # [pre1ELT1post1,pre2ELT3post3]
-
-    # spec:
-    # if newElts.length > 0
-    #   if cut == 0  # then newElts[0] will exist, so not the last one and no need to fix post
-    #     newElts[0].pre = cutElts[0].pre
-    #   else
-    #    if cut == newElts.length # newElts.length > 1, so newElts[n-1] exists, not first and no need to fix pre
-    #      newElts[n-1].post = cutElts[m].post
-
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {openBracket: openBracket, separator: separator, elts: listElements}, [cutStart, cutEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List cut in empty list.'
