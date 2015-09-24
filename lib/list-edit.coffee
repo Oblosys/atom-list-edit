@@ -62,7 +62,7 @@ module.exports =
     #    if cut == newElts.length # newElts.length > 1, so newElts[n-1] exists, not first and no need to fix pre
     #      newElts[n-1].post = cutElts[m].post
 
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {elts: listElements}, [cutStart, cutEnd]) ->
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {sep: separator, elts: listElements}, [cutStart, cutEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List cut in empty list.'
       else
@@ -77,7 +77,7 @@ module.exports =
 
           # copy selected elements to clipboard
           selectionText = bufferText.slice listElements[cutStart].eltStart, listElements[cutEnd-1].eltEnd
-          atom.clipboard.write selectionText, @mkListEditMeta()
+          atom.clipboard.write selectionText, @mkListEditMeta(separator)
 
           if cutStart == 0
             if cutEnd == listElements.length
@@ -107,7 +107,7 @@ module.exports =
 
   copyCmd: ->
     console.log 'Executing command list-edit-copy'
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {elts: listElements}, [selStart,selEnd]) ->
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {sep: separator, elts: listElements}, [selStart,selEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List copy in empty list.'
       else
@@ -118,7 +118,7 @@ module.exports =
           selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
           # Clip includes separators, which seems logical when we use it for a non-list paste
           #console.log "Copied: '#{selectionText}'"
-          atom.clipboard.write selectionText, @mkListEditMeta()
+          atom.clipboard.write selectionText, @mkListEditMeta(separator)
           editor.setSelectedBufferRange (TextManipulation.getRangeForIxRange textBuffer,
                                            [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
@@ -126,7 +126,7 @@ module.exports =
     console.log 'Executing command list-edit-paste'
     clip = atom.clipboard.readWithMetadata()
     clipMeta = @getListEditMeta clip
-    if false # not clipMeta # TODO: Check disabled for easy debugging
+    if not clipMeta
       atom.notifications.addError 'Clipboard does not contain list-edit clip.'
       # TODO: For now this is an error, but we can probably still do something with it in the future (maybe simply strip whitespace and paste)
     else
@@ -135,7 +135,7 @@ module.exports =
         {startIx: listStartIx, endIx: listEndIx, sep: separator, elts: listElements} = elementList
         console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
 
-        separator ?= '<defaultSeparator>'
+        separator ?=  clipMeta.sep ? '<defaultSeparator>'
 
         if selStart != selEnd
           # if an element or a range is selected, all surrounding whitespace can be left untouched
@@ -224,8 +224,8 @@ module.exports =
   # and column nr of opening bracket for handling empty/one elt insertions (column nr is only for multi line lists)
 
 
-  mkListEditMeta: ->
-    {id: 'list-edit-clip-meta'}
+  mkListEditMeta: (separator) ->
+    {id: 'list-edit-clip-meta', sep: separator}
 
   getListEditMeta: (clip) ->
     clip.metadata if clip?.metadata?.id == 'list-edit-clip-meta'
