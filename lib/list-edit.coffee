@@ -124,13 +124,12 @@ module.exports =
                        clipMeta.separator # Use separator from clipboard only if it comes from a list with equal brackets
                        # TODO: Adapt separator indentation level
                      else
+                       defaultSepChar = TextManipulation.getDefaultSeparatorFor openBracket
+                       atom.notifications.addWarning "List-paste: Separator unknown, using default: '#{defaultSepChar}'"
                        # console.log 'Using default separator for \'' + openBracket + '\''
                        # TODO: Guess whitespace based on layout of brackets? (horizontal/vertical)
                        #       Put default whitespace in configuration?
-                       { leadingWhitespace: ''
-                       , sepChar: (TextManipulation.getDefaultSeparatorFor openBracket)
-                       , trailingWhitespace: ' '
-                       }
+                       {leadingWhitespace: '', sepChar: defaultSepChar, trailingWhitespace: ' '}
         # console.log "Separator: #{JSON.stringify separator}"
 
         {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace} =
