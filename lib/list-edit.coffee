@@ -126,14 +126,17 @@ module.exports =
     console.log 'Executing command list-edit-paste'
     clip = atom.clipboard.readWithMetadata()
     clipMeta = @getListEditMeta clip
-    if false # not clipMeta
+    if false # not clipMeta # TODO: Check disabled for easy debugging
       atom.notifications.addError 'Clipboard does not contain list-edit clip.'
       # TODO: For now this is an error, but we can probably still do something with it in the future (maybe simply strip whitespace and paste)
     else
       # TODO: For now assume clipboard comes from the same list as paste target
       @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
-        {startIx: listStartIx, endIx: listEndIx, elts: listElements} = elementList
+        {startIx: listStartIx, endIx: listEndIx, sep: separator, elts: listElements} = elementList
         console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
+
+        separator ?= '<defaultSeparator>'
+
         if selStart != selEnd
           # if an element or a range is selected, all surrounding whitespace can be left untouched
           # (assuming the clip comes from the same list)
@@ -151,12 +154,10 @@ module.exports =
               console.log '  before list start'
               pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
               if listElements.length > 1
-                separator = bufferText[listElements[selStart+1].end] # TODO: get this from a ListElement object
                 sepLeadingWhitespace = listElements[selStart].trailingWhitespace
                 sepTrailingWhitespace = listElements[selStart+1].leadingWhitespace
               else
-                separator = '|'              # TODO: Use heuristic to guess these
-                sepLeadingWhitespace = '__'  #
+                sepLeadingWhitespace = '__'  #       Maybe guess whitespace based on horizontal/vertical layout of target list or maybe clipboard list
                 sepTrailingWhitespace = '__' #
               pasteText = clip.text + sepLeadingWhitespace + separator + sepTrailingWhitespace
 
@@ -164,11 +165,9 @@ module.exports =
               console.log '  after list end'
               pasteIxRange = [listElements[selStart-1].eltEnd,listElements[selStart-1].eltEnd] # immediately in after of preceding element
               if listElements.length > 1
-                separator = bufferText[listElements[selStart-2].end] # TODO: get this from a ListElement object
                 sepLeadingWhitespace = listElements[selStart-2].trailingWhitespace
                 sepTrailingWhitespace = listElements[selStart-1].leadingWhitespace
               else
-                separator = '|'
                 sepLeadingWhitespace = '__'
                 sepTrailingWhitespace = '__'
 

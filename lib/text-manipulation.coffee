@@ -66,6 +66,7 @@ module.exports = TextManipulation =
         [ {bracketIx: listStartIx, ranges: leftIxRanges}
         , {bracketIx: listEndIx,   ranges: rightIxRanges} ] = rangesToOpenAndClose
 
+        separator = null
         listElements =
           if (bufferText.slice listStartIx, listEndIx).match(/^\s*$/)
             # Because empty elements are allowed, "[\s*]" will be interpreted as a list with single empty element
@@ -73,13 +74,15 @@ module.exports = TextManipulation =
             []
           else
             nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
-            elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
+            {sep: separator, ranges: elementRanges} =
+              @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
             # @showIxRanges bufferText, elementRanges
 
             _.map elementRanges, (r) ->
               new ListElement(bufferText, r)
 
-        {startIx: listStartIx, endIx: listEndIx, elts: listElements}
+        # sep will be null for empty lists and singletons
+        {startIx: listStartIx, endIx: listEndIx, sep: separator, elts: listElements}
 
   findMatchingOpeningBracket: (bufferText, startIx, isNested, closingBracket) ->
     # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
@@ -156,7 +159,7 @@ module.exports = TextManipulation =
 
     elementRanges.push [elementStart, endIx]
     # console.log elementRanges
-    elementRanges
+    { sep: separator, ranges: elementRanges }
 
   # PRECONDITION: rangeStart <= rangeEnd
   # NOTE: selection does not include end, so selection [1,2] of [a,b,c,d] = [b]
