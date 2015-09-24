@@ -82,7 +82,10 @@ module.exports = TextManipulation =
               new ListElement(bufferText, r)
 
         # sep will be null for empty lists and singletons
-        {startIx: listStartIx, endIx: listEndIx, sep: separator, elts: listElements}
+        { startIx: listStartIx, endIx: listEndIx
+        , openBracket: bufferText[listStartIx-1], sep: separator
+        , elts: listElements
+        }
 
   findMatchingOpeningBracket: (bufferText, startIx, isNested, closingBracket) ->
     # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
@@ -234,6 +237,14 @@ module.exports = TextManipulation =
       when ']' then '['
       when ')' then '('
       else console.error 'Unknown closing bracket \'' + closingBracket + '\''
+
+  # TODO: Allow these to be configured
+  getDefaultSeparatorFor: (openingBracket) ->
+    switch openingBracket
+      when '{' then ';'
+      when '[' then ','
+      when '(' then ','
+      else console.error 'Unknown opening bracket \'' + openingBracket + '\''
 
   getLeadingWhitespace: (text) ->
     (/^\s*/.exec(text) ? [''])[0]
