@@ -71,39 +71,39 @@ module.exports =
           atom.notifications.addWarning 'Empty list selection.'
           # TODO: on empty, expand selection?
         else
-          console.log 'List elements'
-          console.log e.show() for e in listElements
-          console.log "Selection: [#{cutStart},#{cutEnd}>"
+          # console.log 'List elements'
+          # console.log e.show() for e in listElements
+          # console.log "Selection: [#{cutStart},#{cutEnd}>"
 
           # copy selected elements to clipboard
           selectionText = bufferText.slice listElements[cutStart].eltStart, listElements[cutEnd-1].eltEnd
           atom.clipboard.write selectionText, @mkListEditMeta()
 
-          # elts[0 .. cutStart .. cutEnd .. n-1]
-          newLength = listElements.length - (cutEnd - cutStart) # +1 since cut range is inclusive
-          console.log newLength
-
-          # TODO: rewrite in terms of trailing opening bracket whitespace, leading closing whitespace, etc.
-          if newLength == 0 # [ >ELT, .. ,ELT< ]
-            cutIxRange = [listElements[cutStart].start, listElements[cutEnd-1].end]
-            newWhitespace = ''
+          if cutStart == 0
+            if cutEnd == listElements.length
+              # No remaining elements: also cut surrounding whitespace
+              # console.log "Cut [> elt .. elt <]"
+              cutIxRange = [listElements[cutStart].start, listElements[cutEnd-1].end]
+            else
+              # Remaining elements only after cut: remove trailing separator
+              # console.log "Cut [ >elt .. elt, <elt .. ]"
+              cutIxRange = [listElements[cutStart].eltStart, listElements[cutEnd].eltStart]
           else
-            if cutStart == 0  # newLength > 0, so not the last one and no need to fix post (and elts[cutEnd] exists)
-              cutIxRange = [ listElements[0].start, listElements[cutEnd].eltStart ]
-              newWhitespace = listElements[0].leadingWhitespace  # newElts[0].pre = cutElts[0].pre
-            else # listElements[cutStart-1] exists
-              if cutEnd == listElements.length # last element, so cut including remaining elt's trailing whitespace and replace that by closing bracket whitespace
-                cutIxRange = [ listElements[cutStart-1].eltEnd, listElements[cutEnd-1].end]
-                newWhitespace = listElements[cutEnd-1].trailingWhitespace   #newlistElements[n-1].post = cutElts[m].post
-              else # neither first nor last element are cut
-                cutIxRange = [ listElements[cutStart-1].end, listElements[cutEnd-1].end] # remove from preceding separator until post whitespace of last cut elt
-                newWhitespace = ''
-          console.log 'cut index range:' + cutIxRange
-          console.log 'inserted: "' + newWhitespace + '"'
+            if cutEnd < listElements.length
+              # Remaining elements before and after cut: remove trailing separator
+              # console.log "Cut [ .. elt, >elt .. elt, <elt .. ]"
+              cutIxRange = [listElements[cutStart].eltStart, listElements[cutEnd].eltStart]
+              # Alternative range that favors removing preceding separator
+              # cutIxRange = [listElements[cutStart-1].eltEnd, listElements[cutEnd-1].eltEnd]
+            else
+              # Remaining elements only before cut: remove precedinging separator
+              # console.log "Cut [ .. elt>, elt .. elt< ]"
+              cutIxRange = [listElements[cutStart-1].eltEnd, listElements[cutEnd-1].eltEnd]
+
+          # console.log 'cut index range:' + cutIxRange
           cutRange = TextManipulation.getRangeForIxRange textBuffer, cutIxRange
-          console.log cutRange.start
           # editor.setSelectedBufferRange cutRange # for debugging: select the range that will be cut
-          textBuffer.setTextInRange cutRange, newWhitespace
+          textBuffer.delete cutRange
 
   copyCmd: ->
     console.log 'Executing command list-edit-copy'
