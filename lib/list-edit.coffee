@@ -26,7 +26,7 @@ module.exports =
 
   selectCmd: ->
     console.log 'Executing command list-edit-select'
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [selStart,selEnd]) ->
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {elts: listElements}, [selStart,selEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List select in empty list.'
       else
@@ -62,7 +62,7 @@ module.exports =
     #    if cut == newElts.length # newElts.length > 1, so newElts[n-1] exists, not first and no need to fix pre
     #      newElts[n-1].post = cutElts[m].post
 
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [cutStart, cutEnd]) ->
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {elts: listElements}, [cutStart, cutEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List cut in empty list.'
       else
@@ -107,7 +107,7 @@ module.exports =
 
   copyCmd: ->
     console.log 'Executing command list-edit-copy'
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [selStart,selEnd]) ->
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {elts: listElements}, [selStart,selEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List copy in empty list.'
       else
@@ -131,7 +131,8 @@ module.exports =
       # TODO: For now this is an error, but we can probably still do something with it in the future (maybe simply strip whitespace and paste)
     else
       # TODO: For now assume clipboard comes from the same list as paste target
-      @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, listElements, [selStart,selEnd]) ->
+      @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
+        {startIx: listStartIx, endIx: listEndIx, elts: listElements} = elementList
         console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
         if selStart != selEnd
           # if an element or a range is selected, all surrounding whitespace can be left untouched
@@ -142,8 +143,8 @@ module.exports =
           # empty target range
           if listElements.length == 0
             console.log 'Paste in empty list'
-            pasteIxRange = [0,0] # TODO: need list start and end [listStart, listEnd]
-            pasteText = ' ' + clip.text + ' '
+            pasteIxRange = [listStartIx, listEndIx]
+            pasteText = ' ' + clip.text + ' ' # TODO: try to take pre and post from clipboard list?
           else
             console.log 'Paste on non-empty list'
             if selStart == 0
@@ -208,16 +209,16 @@ module.exports =
       textBuffer = editor.getBuffer()
       bufferText = textBuffer.getText()
       selectionIxRange = TextManipulation.getIxRangeForRange textBuffer, (editor.getSelectedBufferRange())
-      listElements = TextManipulation.getListElements bufferText, selectionIxRange
-      if not listElements?
+      elementList = TextManipulation.getElementList bufferText, selectionIxRange
+      if not elementList?
         atom.notifications.addWarning 'List-edit: Selection is not in well-formed list.'
       else
-        listSelection = TextManipulation.getSelectionForRange listElements, selectionIxRange
-        if listSelection.end > listElements.length
+        listSelection = TextManipulation.getSelectionForRange elementList.elts, selectionIxRange
+        if listSelection.end > elementList.elts.length
           atom.notifications.addError 'List-edit: INTERNAL ERROR: list selection end outside list.'
           # Note: Will not occur, just for easily signaling bugs during development.
         else
-          (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, listElements, listSelection
+          (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, elementList, listSelection
 
   # TODO: store separator, so we can handle switching elements in list of two
   # Maybe also store first pre (trailing opening bracket), last post (leading closing bracket), one middle post pre (leading, trailing separator),

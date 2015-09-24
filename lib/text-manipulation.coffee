@@ -32,7 +32,7 @@ module.exports = TextManipulation =
   # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
   # TODO: Can make this even more powerful (and perhaps more vague?) by allowing
   #       "[(1,>2),(3<,4)]" to select "[>(1,2),(3,4)<]". Currently, one of the ends need to be in the parent list.
-  getListElements: (bufferText, ixRange) ->
+  getElementList: (bufferText, ixRange) ->
     rangesToOpenForStart = @findMatchingOpeningBracket bufferText, ixRange[0], false
     rangesToCloseForStart = @findMatchingClosingBracket bufferText, ixRange[0], false
 
@@ -63,26 +63,23 @@ module.exports = TextManipulation =
         return null
         # TODO: use error property to yield more specific error here?
       else
-        [{bracketIx: listStartIx, ranges: leftIxRanges},
-         {bracketIx: listEndIx,   ranges: rightIxRanges}] = rangesToOpenAndClose
-        nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
+        [ {bracketIx: listStartIx, ranges: leftIxRanges}
+        , {bracketIx: listEndIx,   ranges: rightIxRanges} ] = rangesToOpenAndClose
 
-        # console.log 'leftIxRanges:'
-        # @showIxRanges bufferText, leftIxRanges
-        # console.log 'rightIxRanges:'
-        # @showIxRanges bufferText, rightIxRanges
+        listElements =
+          if (bufferText.slice listStartIx, listEndIx).match(/^\s*$/)
+            # Because empty elements are allowed, "[\s*]" will be interpreted as a list with single empty element
+            # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
+            []
+          else
+            nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
+            elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
+            # @showIxRanges bufferText, elementRanges
 
-        # @showIxRanges bufferText, nonNestedIxRanges
+            _.map elementRanges, (r) ->
+              new ListElement(bufferText, r)
 
-        elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
-
-        # Because empty elements are allowed, [\s*] will be interpreted as a list with single empty element
-        # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
-        elementRanges = [] if elementRanges.length == 1 and elementRanges[0][0] == elementRanges[0][1]
-        # @showIxRanges bufferText, elementRanges
-
-        _.map elementRanges, (r) ->
-          new ListElement(bufferText, r)
+        {startIx: listStartIx, endIx: listEndIx, elts: listElements}
 
   findMatchingOpeningBracket: (bufferText, startIx, isNested, closingBracket) ->
     # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
