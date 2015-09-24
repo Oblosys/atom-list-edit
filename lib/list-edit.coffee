@@ -140,11 +140,14 @@ module.exports =
         separator ?= if clipMeta.openBracket == openBracket and clipMeta.separator
                        # console.log 'Using separator from clipboard'
                        clipMeta.separator # Use separator from clipboard only if it comes from a list with equal brackets
+                       # TODO: Adapt separator indentation level
                      else
                        # console.log 'Using default separator for \'' + openBracket + '\''
-                       { leadingWhitespace: '>>'
+                       # TODO: Guess whitespace based on layout of brackets? (horizontal/vertical)
+                       #       Put default whitespace in configuration?
+                       { leadingWhitespace: ''
                        , sepChar: (TextManipulation.getDefaultSeparatorFor openBracket)
-                       , trailingWhitespace: '<<'
+                       , trailingWhitespace: ' '
                        }
         # console.log "Separator: #{JSON.stringify separator}"
 
@@ -165,37 +168,19 @@ module.exports =
             pasteText = ' ' + clip.text + ' ' # TODO: try to take pre and post from clipboard list?
           else
             console.log 'Paste on non-empty list'
-            if selStart == 0
-              console.log '  before list start'
+            if selStart < listElements.length
+              console.log '  not after last element'
               pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
               pasteText = clip.text + sepLeadingWhitespace + sepChar + sepTrailingWhitespace
-
-            else if selStart == listElements.length
-              console.log '  after list end'
+            else
+              console.log '  after last element'
               pasteIxRange = [listElements[selStart-1].eltEnd,listElements[selStart-1].eltEnd] # immediately in after of preceding element
               pasteText = sepLeadingWhitespace + sepChar + sepTrailingWhitespace + clip.text
-            else
-              console.log '  between start and end (list len > 1)'
-              pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
-              pasteText = clip.text + sepLeadingWhitespace + sepChar + sepTrailingWhitespace
 
         pasteRange = TextManipulation.getRangeForIxRange textBuffer, pasteIxRange
         textBuffer.setTextInRange pasteRange, pasteText
         editor.setCursorBufferPosition (textBuffer.positionForCharacterIndex pasteIxRange[0] + pasteText.length)
 
-    # not on elements
-    #   0 elts, make up bracket space (later we can take it from the clip, possibly modifying it for different indentations (when copying from other lists))
-    #   1 elt,  make up sep space, just use sep+' ' for now (later we can take it from the clip, possibly modifying it for different indentations (when copying from other lists))
-    # > 1 elts, before first element: newElt.whitespace = element[0].whitespace, element[0].whitespace.pre =element[1].whitespace.pre
-    #           after last element:   newElt.whitespace = element[n-1].whitespace, element[n-1].whitespace.post =element[n-2].whitespace.post
-    #           between i and i+1:    newElt.whitespace.pre = element[i+1].whitepace.pre, newElt.whitespace.post = element[i].whitepace.post
-    # maybe always using third rule and having special cases for i=0 and i = n-1 is elegant? (patching the existing elt's whitespace in those cases may make it less elegant)
-
-
-    # for testing, use digits as whitespace
-    # Write algorithm with trailing opening bracket whitespace, etc. Will make it easier to handle pasting from different lists.
-    # [bracket-space-1ELTbracket-space2]
-    # [bracket-space-1ELTsep-space-1,sep-space-2ELTbracketspace2]
   deleteCmd: ->
     console.log 'Executing command list-edit-delete'
 
