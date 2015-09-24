@@ -214,7 +214,8 @@ module.exports = TextManipulation =
 
   # assumes c is character
   isSeparator: (c) ->
-    ',;:'.indexOf(c) != -1
+    ',;'.indexOf(c) != -1 # ':' is sometimes a separator, but allowing it breaks list-edit for JSON objects
+  # TODO: Use priorities for determining the separator, so we only take ':' when there is no ',' or ';'?
 
   # Strings (using whitespace as separator) are tricky, as they can be mistakenly assumed to be open/close bracket
   # e.g. '["Blinky", Inky, "Pinky"]' with cursor on Inky may recognize '", Inky ,"' as list.
