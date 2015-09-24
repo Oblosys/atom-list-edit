@@ -1,6 +1,8 @@
 [  one, two, three, four  ]
 [1,[1,2,[ ,, ]]]
 [   ]
+{ one }
+object = { prop1: 'val2', prop1: 'val1' }
 [ one ]
 [ ( x ] )
 ( one, two )
@@ -34,7 +36,7 @@ mkTabbedView labelsEditActionsTabViews = mkWebView $
      ; return $ TabbedView selectedTab selectionViews tabViews
      }
 
-tricky =   -- copy action3 to before action1: empty lines will also be around newly inserted separator
+tricky =   -- copy action1/3 to anywhere in the list will create new separator that also has a leading empty line
  { action1
 
  ; action3
