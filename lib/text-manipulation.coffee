@@ -66,7 +66,6 @@ module.exports = TextManipulation =
         [ {bracketIx: listStartIx, ranges: leftIxRanges}
         , {bracketIx: listEndIx,   ranges: rightIxRanges} ] = rangesToOpenAndClose
 
-        separator = null
         listElements =
           if (bufferText.slice listStartIx, listEndIx).match(/^\s*$/)
             # Because empty elements are allowed, "[\s*]" will be interpreted as a list with single empty element
@@ -74,16 +73,24 @@ module.exports = TextManipulation =
             []
           else
             nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
-            {sep: separator, ranges: elementRanges} =
-              @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
+            elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
             # @showIxRanges bufferText, elementRanges
 
             _.map elementRanges, (r) ->
               new ListElement(bufferText, r)
+        separator =
+          if listElements.length <= 1
+            null
+          else
+            sepLeadingWhitespace = listElements[0].trailingWhitespace
+            sepChar = bufferText[listElements[1].start-1]
+            sepTrailingWhitespace = listElements[1].leadingWhitespace
+            {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace}
 
         # sep will be null for empty lists and singletons
         { startIx: listStartIx, endIx: listEndIx
-        , openBracket: bufferText[listStartIx-1], sep: separator
+        , openBracket: bufferText[listStartIx-1]
+        , separator: separator
         , elts: listElements
         }
 
@@ -162,7 +169,7 @@ module.exports = TextManipulation =
 
     elementRanges.push [elementStart, endIx]
     # console.log elementRanges
-    { sep: separator, ranges: elementRanges }
+    elementRanges
 
   # PRECONDITION: rangeStart <= rangeEnd
   # NOTE: selection does not include end, so selection [1,2] of [a,b,c,d] = [b]
