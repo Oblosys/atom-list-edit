@@ -7,8 +7,14 @@
 
 # For more detailed documentation see
 # https://atom.io/docs/latest/behind-atom-keymaps-in-depth
-'atom-workspace':
+'.platform-darwin atom-text-editor':
   'alt-cmd-s': 'list-edit:select'
   'alt-cmd-x': 'list-edit:cut'
   'alt-cmd-c': 'list-edit:copy'
   'alt-cmd-v': 'list-edit:paste'
+
+'.platform-win32 atom-text-editor, .platform-linux atom-text-editor':
+  'ctrl-alt-s': 'list-edit:select'
+  'ctrl-alt-x': 'list-edit:cut'
+  'ctrl-alt-c': 'list-edit:copy'
+  'ctrl-alt-v': 'list-edit:paste'
