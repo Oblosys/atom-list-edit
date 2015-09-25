@@ -1,4 +1,5 @@
 # See https://atom.io/docs/latest/hacking-atom-package-word-count#menus for more details
+# TODO: Do we really want these in the context menu? Might be too much clutter.
 'context-menu':
   'atom-text-editor': [
     {

@@ -112,12 +112,11 @@ module.exports =
       atom.notifications.addError 'Clipboard does not contain list-edit clip.'
       # TODO: For now this is an error, but we can probably still do something with it in the future (maybe simply strip whitespace and paste)
     else
-      # TODO: For now assume clipboard comes from the same list as paste target
       @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
         {startIx: listStartIx, endIx: listEndIx, openBracket: openBracket, separator: separator, elts: listElements} = elementList
         console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
         console.log "Opening bracket: #{openBracket}, separator: #{JSON.stringify separator}, clip separator: #{JSON.stringify clip?.separator}"
-        #TODO: name separator is confusing
+
         separator ?= if clipMeta.openBracket == openBracket and clipMeta.separator
                        # console.log 'Using separator from clipboard'
                        clipMeta.separator # Use separator from clipboard only if it comes from a list with equal brackets
@@ -178,11 +177,6 @@ module.exports =
           # Note: Will not occur, just for easily signaling bugs during development.
         else
           (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, elementList, listSelection
-
-  # TODO: store separator, so we can handle switching elements in list of two
-  # Maybe also store first pre (trailing opening bracket), last post (leading closing bracket), one middle post pre (leading, trailing separator),
-  # and column nr of opening bracket for handling empty/one elt insertions (column nr is only for multi line lists)
-
 
   mkListEditMeta: (openBracket, separator) ->
     {id: 'list-edit-clip-meta', openBracket: openBracket, separator: separator}
