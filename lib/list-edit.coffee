@@ -16,7 +16,6 @@ module.exports =
       'list-edit:cut':    => @cutCmd()
       'list-edit:copy':   => @copyCmd()
       'list-edit:paste':  => @pasteCmd()
-      'list-edit:delete': => @deleteCmd()
 
   deactivate: ->
     @subscriptions.dispose()
@@ -161,9 +160,6 @@ module.exports =
         pasteRange = TextManipulation.getRangeForIxRange textBuffer, pasteIxRange
         textBuffer.setTextInRange pasteRange, pasteText
         editor.setCursorBufferPosition (textBuffer.positionForCharacterIndex pasteIxRange[0] + pasteText.length)
-
-  deleteCmd: ->
-    console.log 'Executing command list-edit-delete'
 
   # Wrapper for easy access of common variables
   withSelectedList: (callback) ->

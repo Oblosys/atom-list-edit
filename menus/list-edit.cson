@@ -17,10 +17,6 @@
       'label': 'Paste List Element'
       'command': 'list-edit:paste'
     }
-    {
-      'label': 'Delete List Element'
-      'command': 'list-edit:delete'
-    }
   ]
 'menu': [
   {
@@ -43,10 +39,6 @@
         {
           'label': 'Paste List Element'
           'command': 'list-edit:paste'
-        }
-        {
-          'label': 'Delete List Element'
-          'command': 'list-edit:delete'
         }
       ]
     ]

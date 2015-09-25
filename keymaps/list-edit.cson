@@ -12,5 +12,3 @@
   'alt-cmd-x': 'list-edit:cut'
   'alt-cmd-c': 'list-edit:copy'
   'alt-cmd-v': 'list-edit:paste'
-  # 'alt-cmd-d': 'list-edit:delete'
-  # TODO: 'alt-cmd-d' shows/hides dock on Mac OS X, find better keybinding
