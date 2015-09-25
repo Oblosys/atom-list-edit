@@ -72,7 +72,7 @@ module.exports = TextManipulation =
             # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
             []
           else
-            nonNestedIxRanges = leftIxRanges.reverse().concat rightIxRanges
+            nonNestedIxRanges = leftIxRanges.concat rightIxRanges
             elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
             # @showIxRanges bufferText, elementRanges
 
@@ -104,11 +104,11 @@ module.exports = TextManipulation =
 
       if (closingBracket? && (currentChar == @getOpeningBracketFor closingBracket)) ||
          @isOpeningBracket currentChar
-        @addRange ranges, ix, rangeEnd, isNested
+        @unshiftRange ranges, ix, rangeEnd, isNested
         return {bracketIx: ix, ranges: ranges}
 
       if @isClosingBracket currentChar
-        @addRange ranges, ix, rangeEnd, isNested
+        @unshiftRange ranges, ix, rangeEnd, isNested
         res = @findMatchingOpeningBracket bufferText, ix-1, true, currentChar
         break if not res?
         ix = res.bracketIx
@@ -116,7 +116,10 @@ module.exports = TextManipulation =
 
       ix--
 
-    return null # syntax error in list (or no list)
+    return null # list not well formed, or no list
+
+  unshiftRange: (ranges, rangeStart, rangeEnd, isNested) ->
+    ranges.unshift [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
 
   findMatchingClosingBracket: (bufferText, startIx, isNested, openingBracket) ->
     # console.log "findMatchingClosingBracket: " + startIx + (if openingBracket? then openingBracket else "any opening bracket")
@@ -128,11 +131,11 @@ module.exports = TextManipulation =
 
       if (openingBracket? && (currentChar == @getClosingBracketFor openingBracket)) ||
          @isClosingBracket currentChar
-        @addRange ranges, rangeStart, ix, isNested
+        @pushRange ranges, rangeStart, ix, isNested
         return {bracketIx: ix, ranges: ranges}
 
       if @isOpeningBracket currentChar
-        @addRange ranges, rangeStart, ix, isNested
+        @pushRange ranges, rangeStart, ix, isNested
         res = @findMatchingClosingBracket bufferText, ix+1, true, currentChar
         break if not res?
         ix = res.bracketIx
@@ -140,9 +143,9 @@ module.exports = TextManipulation =
 
       ix++
 
-    return null # syntax error in list (or no list)
+    return null # list not well formed, or no list)
 
-  addRange: (ranges, rangeStart, rangeEnd, isNested) ->
+  pushRange: (ranges, rangeStart, rangeEnd, isNested) ->
     ranges.push [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
 
   # Convert list of ranges that cover the entire list except its sublists, to ranges for its elements.
