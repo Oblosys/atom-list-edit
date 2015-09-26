@@ -33,66 +33,64 @@ module.exports = TextManipulation =
   # TODO: Can make this even more powerful (and perhaps more vague?) by allowing
   #       "[(1,>2),(3<,4)]" to select "[>(1,2),(3,4)<]". Currently, one of the ends need to be in the parent list.
   getElementList: (bufferText, ixRange) ->
-    rangesToOpenForStart = @findMatchingOpeningBracket bufferText, ixRange[0], false
-    rangesToCloseForStart = @findMatchingClosingBracket bufferText, ixRange[0], false
-
-    rangesToOpenForEnd = @findMatchingOpeningBracket bufferText, ixRange[1], false
-    rangesToCloseForEnd = @findMatchingClosingBracket bufferText, ixRange[1], false
-
-    if not (rangesToOpenForStart? and rangesToCloseForStart? and rangesToOpenForEnd? and rangesToCloseForEnd?)
-      return null
-      # TODO: use error property to yield more specific error here?
+    containingList = @getListContainingRange bufferText, ixRange
+    if not containingList?
+      null
     else
-      startOpen = rangesToOpenForStart.bracketIx
-      startClose = rangesToCloseForStart.bracketIx
-      endOpen = rangesToOpenForEnd.bracketIx
-      endClose = rangesToCloseForEnd.bracketIx
-      if (bufferText[startClose] != @getClosingBracketFor bufferText[startOpen-1]) or
-         (bufferText[endClose] != @getClosingBracketFor bufferText[endOpen-1])
-        return null # opening and closing brackets don't match: list is not well formed
-        # TODO: use error property to yield more specific error here?
-
-      rangesToOpenAndClose = switch
-        when (startOpen == endOpen) and (startClose == endClose) or
-             (startOpen < endOpen)  and (startClose >  endClose) then [rangesToOpenForStart, rangesToCloseForStart]
-        when (endOpen < startOpen)  and (endClose >  startClose) then [rangesToOpenForEnd,   rangesToCloseForEnd]
+      listElements =
+        if (bufferText.slice listStartIx, listEndIx).match(/^\s*$/)
+          # Because empty elements are allowed, "[\s*]" will be interpreted as a list with single empty element
+          # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
+          []
         else
+          { listRange: [listStartIx,listEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
+          #nonNestedIxRanges = leftIxRanges.concat rightIxRanges
+          elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
+          # @showIxRanges bufferText, elementRanges
+
+          _.map elementRanges, (r) ->
+            new ListElement(bufferText, r)
+
+      separator =
+        if listElements.length <= 1
           null
+        else
+          sepLeadingWhitespace = listElements[0].trailingWhitespace
+          sepChar = bufferText[listElements[1].start-1]
+          sepTrailingWhitespace = listElements[1].leadingWhitespace
+          {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace}
 
-      if not rangesToOpenAndClose?
-        return null
-        # TODO: use error property to yield more specific error here?
-      else
-        [ {bracketIx: listStartIx, ranges: leftIxRanges}
-        , {bracketIx: listEndIx,   ranges: rightIxRanges} ] = rangesToOpenAndClose
+      # sep will be null for empty lists and singletons
+      { startIx: listStartIx, endIx: listEndIx
+      , openBracket: bufferText[listStartIx-1]
+      , separator: separator
+      , elts: listElements
+      }
 
-        listElements =
-          if (bufferText.slice listStartIx, listEndIx).match(/^\s*$/)
-            # Because empty elements are allowed, "[\s*]" will be interpreted as a list with single empty element
-            # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
-            []
-          else
-            nonNestedIxRanges = leftIxRanges.concat rightIxRanges
-            elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
-            # @showIxRanges bufferText, elementRanges
+  # Get nearest enclosing list that contains both range start and range end (which may be at different depth levels)
+  getListContainingRange: (bufferText, range) ->
+    leftIx = rightIx = range[0]
+    loop
+      # Repeatedly take enclosing lists, until the range is included or we arrive at the document bounds
+      list = @getEnclosingList bufferText, leftIx, rightIx
+      break unless list? and list.listRange[0] > 0 and list.listRange[1] < range[1] # no need to check for end of file, because of range[1] check
+      leftIx = list.listRange[0] - 1
+      rightIx = list.listRange[1] + 1
+    list
 
-            _.map elementRanges, (r) ->
-              new ListElement(bufferText, r)
-        separator =
-          if listElements.length <= 1
-            null
-          else
-            sepLeadingWhitespace = listElements[0].trailingWhitespace
-            sepChar = bufferText[listElements[1].start-1]
-            sepTrailingWhitespace = listElements[1].leadingWhitespace
-            {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace}
+  # Get nearest enclosing list that holds [start, end>
+  # PRECONDITION: [start, end> is either empty or a well-formed list
+  getEnclosingList: (bufferText, start, end) ->
+    rangesToOpen = @findMatchingOpeningBracket bufferText, start, false
+    rangesToClose = @findMatchingClosingBracket bufferText, end, false
 
-        # sep will be null for empty lists and singletons
-        { startIx: listStartIx, endIx: listEndIx
-        , openBracket: bufferText[listStartIx-1]
-        , separator: separator
-        , elts: listElements
-        }
+    if rangesToOpen? and rangesToClose? and
+       (@getClosingBracketFor bufferText[rangesToOpen.bracketIx-1]) == bufferText[rangesToClose.bracketIx]
+      { listRange: [rangesToOpen.bracketIx, rangesToClose.bracketIx]
+      , nonNestedRanges: rangesToOpen.ranges.concat rangesToClose.ranges
+      }
+    else
+      null
 
   findMatchingOpeningBracket: (bufferText, startIx, isNested, closingBracket) ->
     # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
