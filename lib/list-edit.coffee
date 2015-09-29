@@ -176,6 +176,7 @@ module.exports =
           atom.notifications.addError 'List-edit: INTERNAL ERROR: list selection end outside list.'
           # Note: Will not occur, just for easily signaling bugs during development.
         else
+          # Can also use => in the definition of the callbacks that require @, but this is safer
           (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, elementList, listSelection
 
   mkListEditMeta: (openBracket, separator) ->
