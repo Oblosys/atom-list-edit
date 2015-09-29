@@ -100,10 +100,12 @@ module.exports = TextManipulation =
     while ix > 0
       currentChar = bufferText[ix-1]
 
-      if (closingBracket? && (currentChar == @getOpeningBracketFor closingBracket)) ||
-         @isOpeningBracket currentChar
-        @unshiftRange ranges, ix, rangeEnd, isNested
-        return {bracketIx: ix, ranges: ranges}
+      if @isOpeningBracket currentChar
+        if closingBracket? && currentChar != @getOpeningBracketFor closingBracket
+          return null
+        else
+          @unshiftRange ranges, ix, rangeEnd, isNested
+          return {bracketIx: ix, ranges: ranges}
 
       if @isClosingBracket currentChar
         @unshiftRange ranges, ix, rangeEnd, isNested
@@ -127,10 +129,12 @@ module.exports = TextManipulation =
     while ix < bufferText.length
       currentChar = bufferText[ix]
 
-      if (openingBracket? && (currentChar == @getClosingBracketFor openingBracket)) ||
-         @isClosingBracket currentChar
-        @pushRange ranges, rangeStart, ix, isNested
-        return {bracketIx: ix, ranges: ranges}
+      if @isClosingBracket currentChar
+        if openingBracket? && currentChar != @getClosingBracketFor openingBracket
+          return null
+        else
+          @pushRange ranges, rangeStart, ix, isNested
+          return {bracketIx: ix, ranges: ranges}
 
       if @isOpeningBracket currentChar
         @pushRange ranges, rangeStart, ix, isNested
