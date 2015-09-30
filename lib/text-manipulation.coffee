@@ -67,7 +67,8 @@ module.exports = TextManipulation =
       , elts: listElements
       }
 
-  # Get nearest enclosing list that contains both range start and range end (which may be at different depth levels)
+  # Get inner range and non-nested subranges for nearest enclosing list that contains
+  # both range start and range end (which may be at different depth levels).
   getListContainingRange: (bufferText, range) ->
     leftIx = rightIx = range[0]
     loop
@@ -78,15 +79,15 @@ module.exports = TextManipulation =
       rightIx = list.listRange[1] + 1
     list
 
-  # Get nearest enclosing list that holds [start, end>
+  # Get inner range and non-nested subranges for nearest enclosing list that holds [start, end>
   # PRECONDITION: [start, end> is either empty or a well-formed list
   getEnclosingList: (bufferText, start, end) ->
     rangesToOpen = @findMatchingOpeningBracket bufferText, start, false
     rangesToClose = @findMatchingClosingBracket bufferText, end, false
 
     if rangesToOpen? and rangesToClose? and
-       (@getClosingBracketFor bufferText[rangesToOpen.bracketIx-1]) == bufferText[rangesToClose.bracketIx]
-      { listRange: [rangesToOpen.bracketIx, rangesToClose.bracketIx]
+       (@getClosingBracketFor bufferText[rangesToOpen.bracketIx]) == bufferText[rangesToClose.bracketIx]
+      { listRange: [rangesToOpen.bracketIx+1, rangesToClose.bracketIx]
       , nonNestedRanges: rangesToOpen.ranges.concat rangesToClose.ranges
       }
     else
@@ -105,13 +106,13 @@ module.exports = TextManipulation =
           return null
         else
           @unshiftRange ranges, ix, rangeEnd, isNested
-          return {bracketIx: ix, ranges: ranges}
+          return {bracketIx: ix-1, ranges: ranges}
 
       if @isClosingBracket currentChar
         @unshiftRange ranges, ix, rangeEnd, isNested
         res = @findMatchingOpeningBracket bufferText, ix-1, true, currentChar
         break if not res?
-        ix = res.bracketIx
+        ix = res.bracketIx+1
         rangeEnd = ix-1
 
       ix--

@@ -38,19 +38,19 @@ describe 'TextManipulation', ->
     bufferText = '[1,[1,2,[]]]'
     it 'handles index at end of nested list', ->
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 11, false)
-       .toEqual({bracketIx: 1, ranges: [ [1,3] ]})
+       .toEqual({bracketIx: 0, ranges: [ [1,3] ]})
     it 'handles index at end of nested list contents', ->
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 10, false)
-       .toEqual({bracketIx: 4, ranges: [ [4,8] ]})
+       .toEqual({bracketIx: 3, ranges: [ [4,8] ]})
     it 'handles index at start of nested nested list contents', ->
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 9, false)
-       .toEqual({bracketIx: 9, ranges: [  ]})
+       .toEqual({bracketIx: 8, ranges: [  ]})
     it 'handles index at start of nested nested list', ->
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 8, false)
-       .toEqual({bracketIx: 4, ranges: [ [4,8] ]})
+       .toEqual({bracketIx: 3, ranges: [ [4,8] ]})
     it 'handles index at start of list contents', ->
       expect(TextManipulation.findMatchingOpeningBracket bufferText, 1, false)
-       .toEqual({bracketIx: 1, ranges: [  ]})
+       .toEqual({bracketIx: 0, ranges: [  ]})
 
   describe 'findMatchingClosingBracket', ->
     # TODO: split into separate 'it' clauses
