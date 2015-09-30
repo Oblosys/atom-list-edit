@@ -37,13 +37,13 @@ module.exports = TextManipulation =
     if not containingList?
       null
     else
+      {listRange: [listStartIx,listEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
       listElements =
         if (bufferText.slice listStartIx, listEndIx).match(/^\s*$/)
           # Because empty elements are allowed, "[\s*]" will be interpreted as a list with single empty element
           # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
           []
         else
-          { listRange: [listStartIx,listEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
           #nonNestedIxRanges = leftIxRanges.concat rightIxRanges
           elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
           # @showIxRanges bufferText, elementRanges
