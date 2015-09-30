@@ -65,37 +65,37 @@ describe 'TextManipulation', ->
       expect(TextManipulation.findMatchingClosingBracket bufferText, 0, false)
        .toEqual(null)
 
-  describe 'getListElements', ->
+  describe 'getElementList', ->
     #             01234567890123
     bufferText = '{1,([],2,3),4}'
 
     it 'should return null when there is no enclosing list', ->
-      expect(TextManipulation.getListElements bufferText, [0,0])
+      expect(TextManipulation.getElementList bufferText, [0,0])
         .toEqual(null)
 
     it 'should return the elements of the enclosing list even when index is immediately after opening tag', ->
-      expect(TextManipulation.getListElements bufferText, [1,1])
+      expect((TextManipulation.getElementList bufferText, [1,1]).elts)
         .toEqual(_.map [ [1,2], [3,11], [12,13] ], (r) -> new TextManipulation.ListElement bufferText, r)
 
     it 'should return the elements of a nested list', ->
-      expect(TextManipulation.getListElements bufferText, [4,4])
+      expect((TextManipulation.getElementList bufferText, [4,4]).elts)
         .toEqual(_.map [ [4,6], [7,8], [9,10] ], (r) -> new TextManipulation.ListElement bufferText, r)
 
     it 'should return the elements (i.e. []) of an empty list', ->
-      expect(TextManipulation.getListElements bufferText, [5,5])
+      expect((TextManipulation.getElementList bufferText, [5,5]).elts)
         .toEqual( [] )
 
     it 'should allow empty ranges', ->
-      expect(TextManipulation.getListElements '[ ,, ]', [1,1])
+      expect((TextManipulation.getElementList '[ ,, ]', [1,1]).elts)
         .toEqual(_.map [ [1,2], [3,3], [4,5] ], (r) -> new TextManipulation.ListElement '[ ,, ]', r)
 
     it 'should allow empty ranges at start and end', ->
-      expect(TextManipulation.getListElements '[, ,]', [1,1])
+      expect((TextManipulation.getElementList '[, ,]', [1,1]).elts)
         .toEqual(_.map [ [1,1], [2,3], [4,4] ], (r) -> new TextManipulation.ListElement '[, ,]', r)
 
   describe 'getSelectionForRange', ->
     #                                             1234567890123456789012345
-    listElts = TextManipulation.getListElements '[   Inky , Dinky , Pinky  ]', [1,1]
+    listElts = (TextManipulation.getElementList '[   Inky , Dinky , Pinky  ]', [1,1]).elts
 
     it 'should select a single element when selection is inside the element', ->
       expect(TextManipulation.getSelectionForRange listElts, [5,5]).toEqual([0,1])
