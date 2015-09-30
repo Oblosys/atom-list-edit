@@ -167,7 +167,8 @@ module.exports =
       textBuffer = editor.getBuffer()
       bufferText = textBuffer.getText()
       selectionIxRange = TextManipulation.getIxRangeForRange textBuffer, (editor.getSelectedBufferRange())
-      elementList = TextManipulation.getElementList bufferText, selectionIxRange
+      ignoreRanges = @scanIgnoreRanges editor, textBuffer, bufferText
+      elementList = TextManipulation.getElementList bufferText, ignoreRanges, selectionIxRange
       if not elementList?
         atom.notifications.addWarning 'List-edit: Selection is not in well-formed list.'
       else
@@ -184,6 +185,71 @@ module.exports =
 
   getListEditMeta: (clip) ->
     clip.metadata if clip?.metadata?.id == 'list-edit-clip-meta'
+
+  ignoreScopes: ['string', 'comment']
+
+  # Return all ranges that have a scope from ignoreScopes. Connecting ranges are merged.
+  scanIgnoreRanges: (editor, textBuffer, bufferText) ->
+    grammar = editor.getGrammar()
+    ignoredScopeIds = []
+    for scope, scopeId of grammar.registry.idsByScope # TODO: is this how we should access the GrammarRegistry?
+      # console.log scopeId + ': ' + scope
+      if (_.some @ignoreScopes, (skipScope) -> return scope == skipScope || scope.startsWith skipScope)
+        ignoredScopeIds.push scopeId
+
+    lines = bufferText.split('\n')
+    # console.log grammar.tokenizeLines(bufferText)
+    ignoredRanges = []
+    currentIgnoreRanges = []
+    inIgnoreRange = false
+    startOfIgnoreRange = null
+    # Because we don't need the fully tokenized text, we replicate some code
+    # from Grammar##tokenizeLines and GrammarRegistry##decodeTokens.
+
+    ruleStack = null
+    for line, lineNr in lines
+      {tags, ruleStack} = grammar.tokenizeLine(line, ruleStack, lineNr is 0)
+      # tokenizeLines returns newline tags only sometimes (e.g. at the end of line comments), which has two consequences
+      # - We cannot add content tags to get an accurate bufferIx, as newlines will be missing, so we use
+      #   characterIndexForPosition, which is only log(bufferText.length) and also avoids CRLF issues.
+      # - As skip ranges are closed on content tags, ranges for strings at the end of line will incorrectly include the newline,
+      #   which is fine, since we can skip the newline anyway.
+      bufferIx = textBuffer.characterIndexForPosition [lineNr, 0]
+      console.log 'L' + lineNr + ': ix:' + bufferIx + 'tags: ' + tags
+      for tag in tags
+        if tag < 0
+          # "odd negative numbers are begin scope tags"
+          # "even negative numbers are end scope tags"
+          isOpenTag = (tag % 2) is -1
+          tagId = if isOpenTag then tag else tag + 1
+          if _.contains ignoredScopeIds, tagId
+            if isOpenTag
+              # console.log 'Open ignored scope id: ' + tagId
+              currentIgnoreRanges.push tagId
+            else
+              # console.log 'Close ignored scope id: ' + tagId
+              currentIgnoreRanges.pop() # Scopes will be nested correctly, so we can simply pop the last one
+        else
+          # console.log 'content: ' + tag + '   ' + currentIgnoreRanges
+          if currentIgnoreRanges.length > 0
+            if not inIgnoreRange
+              startOfIgnoreRange = bufferIx
+              inIgnoreRange = true
+          else
+            # "positive numbers indicate string content with length equaling the number"
+            # 0 indicates empty line
+            if inIgnoreRange
+              ignoredRanges.push [startOfIgnoreRange, bufferIx]
+              inIgnoreRange = false
+              # Because we use content tags to close skip ranges, strings at the end of line will
+              # include the newline, as this does not show up as a tag, causing the string scope to end on the next line
+              # This is not a problem though, as we skip the newline as well.
+          bufferIx += tag
+
+    if inIgnoreRange
+      ignoredRanges.push [startOfIgnoreRange, bufferIx]
+
+    ignoredRanges
 
 
 # for testing in console:

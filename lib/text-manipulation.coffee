@@ -32,8 +32,8 @@ module.exports = TextManipulation =
   # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
   # TODO: Can make this even more powerful (and perhaps more vague?) by allowing
   #       "[(1,>2),(3<,4)]" to select "[>(1,2),(3,4)<]". Currently, one of the ends need to be in the parent list.
-  getElementList: (bufferText, ixRange) ->
-    containingList = @getListContainingRange bufferText, ixRange
+  getElementList: (bufferText, ignoreRanges, ixRange) ->
+    containingList = @getListContainingRange bufferText, ignoreRanges, ixRange
     if not containingList?
       null
     else
@@ -69,11 +69,11 @@ module.exports = TextManipulation =
 
   # Get inner range and non-nested subranges for nearest enclosing list that contains
   # both range start and range end (which may be at different depth levels).
-  getListContainingRange: (bufferText, range) ->
+  getListContainingRange: (bufferText, ignoreRanges, range) ->
     leftIx = rightIx = range[0]
     loop
       # Repeatedly take enclosing lists, until the range is included or we arrive at the document bounds
-      list = @getEnclosingList bufferText, leftIx, rightIx
+      list = @getEnclosingList bufferText, ignoreRanges, leftIx, rightIx
       break unless list? and list.listRange[0] > 0 and list.listRange[1] < range[1] # no need to check for end of file, because of range[1] check
       leftIx = list.listRange[0] - 1
       rightIx = list.listRange[1] + 1
@@ -81,9 +81,9 @@ module.exports = TextManipulation =
 
   # Get inner range and non-nested subranges for nearest enclosing list that holds [start, end>
   # PRECONDITION: [start, end> is either empty or a well-formed list
-  getEnclosingList: (bufferText, start, end) ->
-    rangesToOpen = @findMatchingOpeningBracket bufferText, start, false
-    rangesToClose = @findMatchingClosingBracket bufferText, end, false
+  getEnclosingList: (bufferText, ignoreRanges, start, end) ->
+    rangesToOpen = @findMatchingOpeningBracket bufferText, ignoreRanges, start, false
+    rangesToClose = @findMatchingClosingBracket bufferText, ignoreRanges, end, false
 
     if rangesToOpen? and rangesToClose? and
        (@getClosingBracketFor bufferText[rangesToOpen.bracketIx]) == bufferText[rangesToClose.bracketIx]
@@ -93,11 +93,11 @@ module.exports = TextManipulation =
     else
       null
 
-  findMatchingOpeningBracket: (bufferText, startIx, isNested, closingBracket) ->
+  findMatchingOpeningBracket: (bufferText, ignoreRanges, startIx, isNested, closingBracket) ->
     # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
     ranges = []
-    ix = startIx
-    rangeEnd = ix
+    rangeEnd = startIx
+    ix = @backwardSkipIgnored ignoreRanges, startIx
     while ix > 0
       currentChar = bufferText[ix-1]
 
@@ -110,23 +110,23 @@ module.exports = TextManipulation =
 
       if @isClosingBracket currentChar
         @unshiftRange ranges, ix, rangeEnd, isNested
-        res = @findMatchingOpeningBracket bufferText, ix-1, true, currentChar
+        res = @findMatchingOpeningBracket bufferText, ignoreRanges, ix-1, true, currentChar
         break if not res?
         ix = res.bracketIx+1
         rangeEnd = ix-1
 
-      ix--
+      ix  = @backwardSkipIgnored ignoreRanges,  ix-1
 
     return null # list not well formed, or no list
 
   unshiftRange: (ranges, rangeStart, rangeEnd, isNested) ->
     ranges.unshift [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
 
-  findMatchingClosingBracket: (bufferText, startIx, isNested, openingBracket) ->
+  findMatchingClosingBracket: (bufferText, ignoreRanges, startIx, isNested, openingBracket) ->
     # console.log "findMatchingClosingBracket: " + startIx + (if openingBracket? then openingBracket else "any opening bracket")
     ranges = []
-    ix = startIx
-    rangeStart = ix
+    rangeStart = startIx
+    ix = @forwardSkipIgnored ignoreRanges, startIx
     while ix < bufferText.length
       currentChar = bufferText[ix]
 
@@ -139,17 +139,40 @@ module.exports = TextManipulation =
 
       if @isOpeningBracket currentChar
         @pushRange ranges, rangeStart, ix, isNested
-        res = @findMatchingClosingBracket bufferText, ix+1, true, currentChar
+        res = @findMatchingClosingBracket bufferText, ignoreRanges, ix+1, true, currentChar
         break if not res?
         ix = res.bracketIx
         rangeStart = ix+1
 
-      ix++
+      ix = @forwardSkipIgnored ignoreRanges, ix+1
 
     return null # list not well formed, or no list)
 
   pushRange: (ranges, rangeStart, rangeEnd, isNested) ->
     ranges.push [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
+
+  # Use binary search to return the element of ignoreRanges that contains targetIx, or null
+  findRangeForIndex: (ignoreRanges, targetIx) ->
+    console.log 'findRangeForIndex'+targetIx
+    startIx = 0
+    endIx = ignoreRanges.length - 1
+    while endIx >= startIx
+      ix =  startIx + Math.floor (endIx - startIx) / 2
+      if targetIx < ignoreRanges[ix][0]
+        endIx = ix - 1
+      else if targetIx >= ignoreRanges[ix][1]
+        startIx = ix + 1
+      else
+        return ignoreRanges[ix]
+    null
+
+  # PRECONDITION: ranges do not connect (i.e. there is at least one element in between)
+  backwardSkipIgnored: (ignoreRanges, ix) ->
+    (@findRangeForIndex ignoreRanges, ix)?[0] ? ix
+
+  # PRECONDITION: ranges do not connect (i.e. there is at least one element in between)
+  forwardSkipIgnored: (ignoreRanges, ix) ->
+    (@findRangeForIndex ignoreRanges, ix)?[1] ? ix
 
   # Convert list of ranges that cover the entire list except its sublists, to ranges for its elements.
   # The first separator encountered is expected to be the separator for the entire list.
