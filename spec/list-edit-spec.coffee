@@ -72,6 +72,33 @@ describe 'TextManipulation', ->
       expect(TextManipulation.findMatchingClosingBracket bufferText, 0, false)
        .toEqual(null)
 
+  describe 'getEnclosingList', ->
+    #             01234567890123
+    bufferText = '[1,(a,b),2]'
+    it 'works when surrounding a nested list', ->
+      expect(TextManipulation.getEnclosingList bufferText, 3, 8)
+        .toEqual({listRange: [1, 10], nonNestedRanges: [[1, 3], [8, 10]]})
+    it 'works when inside a nested list', ->
+      expect(TextManipulation.getEnclosingList bufferText, 5, 5)
+        .toEqual({listRange: [4, 7], nonNestedRanges: [[4, 5], [5, 7]]})
+    it 'fails on bracket mismatch', ->
+      expect(TextManipulation.getEnclosingList '(  ]', 2, 2)
+        .toEqual(null)
+
+  describe 'getListContainingRange', ->
+    #                       1         2         3         4
+    #             01234567890123456789012345678901234567890123456789
+    bufferText = '[one, f(a,b), two, {p1: [v1,v2], p2:v3}, three]'
+    it 'handles range inside one element', ->
+      expect(TextManipulation.getListContainingRange bufferText, [1, 1])
+        .toEqual({listRange: [1, 46], nonNestedRanges : [[1, 7], [12, 19], [39, 46]]})
+    it 'handles range starting inside one element and ending inside another element', ->
+      expect(TextManipulation.getListContainingRange bufferText, [1, 15])
+        .toEqual({listRange: [1, 46], nonNestedRanges : [[1, 7], [12, 19], [39, 46]]})
+    it 'handles range starting in one nested list and ending in a nested list inside another nested list', ->
+      expect(TextManipulation.getListContainingRange bufferText, [8, 25])
+        .toEqual({listRange: [1, 46], nonNestedRanges : [[1, 7], [12, 19], [39, 46]]})
+
   describe 'getElementList', ->
     #             01234567890123
     bufferText = '{1,([],2,3),4}'
