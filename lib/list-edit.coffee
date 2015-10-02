@@ -123,6 +123,7 @@ module.exports =
                      else
                        defaultSepChar = TextManipulation.getDefaultSeparatorFor openBracket
                        atom.notifications.addWarning "List-paste: Separator unknown, using default: '#{defaultSepChar}'"
+                       # TODO: only need to warn when separator is actually used
                        # console.log 'Using default separator for \'' + openBracket + '\''
                        # TODO: Guess whitespace based on layout of brackets? (horizontal/vertical)
                        #       Put default whitespace in configuration?
@@ -138,6 +139,7 @@ module.exports =
           pasteText = clip.text
           # TODO: What to do with multi-element clips? These will contain separators of their own.
           #       Modify to match target list? Mismatch between the two will probably be rather rare.
+          #       But we might as well do it, since we need to adapt the whitespace to the new list anyway.
         else
           # empty target range
           if listElements.length == 0
@@ -214,7 +216,6 @@ module.exports =
       # - As skip ranges are closed on content tags, ranges for strings at the end of line will incorrectly include the newline,
       #   which is fine, since we can skip the newline anyway.
       bufferIx = textBuffer.characterIndexForPosition [lineNr, 0]
-      console.log 'L' + lineNr + ': ix:' + bufferIx + 'tags: ' + tags
       for tag in tags
         if tag < 0
           # "odd negative numbers are begin scope tags"

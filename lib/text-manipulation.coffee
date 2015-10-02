@@ -30,8 +30,6 @@ module.exports = TextManipulation =
   ListElement: ListElement
 
   # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
-  # TODO: Can make this even more powerful (and perhaps more vague?) by allowing
-  #       "[(1,>2),(3<,4)]" to select "[>(1,2),(3,4)<]". Currently, one of the ends need to be in the parent list.
   getElementList: (bufferText, ignoreRanges, ixRange) ->
     containingList = @getListContainingRange bufferText, ignoreRanges, ixRange
     if not containingList?
@@ -153,7 +151,6 @@ module.exports = TextManipulation =
 
   # Use binary search to return the element of ignoreRanges that contains targetIx, or null
   findRangeForIndex: (ignoreRanges, targetIx) ->
-    console.log 'findRangeForIndex'+targetIx
     startIx = 0
     endIx = ignoreRanges.length - 1
     while endIx >= startIx
