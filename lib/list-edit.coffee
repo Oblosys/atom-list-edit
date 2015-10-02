@@ -21,7 +21,6 @@ module.exports =
     @subscriptions.dispose()
 
   serialize: ->
-    listEditViewState: @listEditView.serialize()
 
   selectCmd: ->
     console.log 'Executing command list-edit-select'
