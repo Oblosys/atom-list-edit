@@ -2,11 +2,6 @@ _ = require 'underscore-plus'
 ListEdit = require '../lib/list-edit'
 TextManipulation = require '../lib/text-manipulation'
 
-# Use the command `window:run-package-specs` (cmd-alt-ctrl-p) to run specs.
-#
-# To run a specific `it` or `describe` block add an `f` to the front (e.g. `fit`
-# or `fdescribe`). Remove the `f` to unfocus the block.
-
 describe 'TextManipulation', ->
   sourceFragment = 'Data 1 2 3'
   leadingWhitespace = ' ' #'\n\n\t '
@@ -216,11 +211,3 @@ describe 'TextManipulation', ->
     it 'handles index immediately after ignore', ->
       expect(TextManipulation.forwardSkipIgnored ignoreRanges, 6)
         .toEqual(6)
-
-
-describe 'ListEdit', ->
-  [workspaceElement, activationPromise] = []
-
-  beforeEach ->
-    workspaceElement = atom.views.getView(atom.workspace)
-    activationPromise = atom.packages.activatePackage('list-edit')
