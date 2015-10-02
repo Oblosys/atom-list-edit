@@ -1,6 +1,6 @@
 ListEdit = require '../lib/list-edit'
 
-fdescribe 'ListEdit', ->
+describe 'ListEdit', ->
   [editor, editorView] = []
 
   beforeEach ->
