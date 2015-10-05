@@ -199,7 +199,7 @@ module.exports =
         ignoredScopeIds.push scopeId
 
     lines = bufferText.split('\n')
-    # console.log grammar.tokenizeLines(bufferText)
+    # console.log  JSON.stringify grammar.tokenizeLines bufferText
     ignoredRanges = []
     currentIgnoreRanges = []
     inIgnoreRange = false
@@ -209,7 +209,8 @@ module.exports =
 
     ruleStack = null
     for line, lineNr in lines
-      {tags, ruleStack} = grammar.tokenizeLine(line, ruleStack, lineNr is 0)
+      {tags, ruleStack} = grammar.tokenizeLine line, ruleStack, lineNr is 0
+      # console.log 'tags line '+lineNr + JSON.stringify tags
       # tokenizeLines returns newline tags only sometimes (e.g. at the end of line comments), which has two consequences
       # - We cannot add content tags to get an accurate bufferIx, as newlines will be missing, so we use
       #   characterIndexForPosition, which is only log(bufferText.length) and also avoids CRLF issues.
@@ -247,8 +248,10 @@ module.exports =
           bufferIx += tag
 
     if inIgnoreRange
-      ignoredRanges.push [startOfIgnoreRange, bufferIx]
-
+      ignoredRanges.push [startOfIgnoreRange, Math.min bufferIx, bufferText.length ]
+      # Grammar##tokenizeLine assumes all lines, including the last one, to end with a newline, even if
+      # the last line has no newline. Hence, the newline tag mentioned above may appear also on the last line,
+      # in which case it will span beyond the end of file.
     ignoredRanges
 
 
