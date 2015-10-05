@@ -8,24 +8,24 @@ describe 'TextManipulation', ->
   describe 'stripLeadingWhitespace', ->
     it 'strips leading whitespace', ->
     expect(TextManipulation.stripLeadingWhitespace (leadingWhitespace+sourceFragment+trailingWhitespace))
-      .toEqual(sourceFragment+trailingWhitespace)
+      .toBe(sourceFragment+trailingWhitespace)
     it 'is identity when there is no leading whitespace', ->
     expect(TextManipulation.stripLeadingWhitespace (sourceFragment+trailingWhitespace))
-      .toEqual(sourceFragment+trailingWhitespace)
+      .toBe(sourceFragment+trailingWhitespace)
     it 'handles whitespace-only string', ->
     expect(TextManipulation.stripLeadingWhitespace (leadingWhitespace+trailingWhitespace))
-      .toEqual('')
+      .toBe('')
 
   describe 'stripTrailingWhitespace', ->
     it 'strips trailing whitespace', ->
     expect(TextManipulation.stripTrailingWhitespace (leadingWhitespace+sourceFragment+trailingWhitespace))
-      .toEqual(leadingWhitespace+sourceFragment)
+      .toBe(leadingWhitespace+sourceFragment)
     it 'is identity when there is no trailing whitespace', ->
     expect(TextManipulation.stripTrailingWhitespace (leadingWhitespace+sourceFragment))
-      .toEqual(leadingWhitespace+sourceFragment)
+      .toBe(leadingWhitespace+sourceFragment)
     it 'handles whitespace-only string', ->
     expect(TextManipulation.stripTrailingWhitespace (leadingWhitespace+trailingWhitespace))
-      .toEqual('')
+      .toBe('')
 
   describe 'findMatchingOpeningBracket', ->
     #             012345678901
