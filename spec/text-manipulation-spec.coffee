@@ -1,5 +1,4 @@
 _ = require 'underscore-plus'
-ListEdit = require '../lib/list-edit'
 TextManipulation = require '../lib/text-manipulation'
 
 describe 'TextManipulation', ->
@@ -94,60 +93,72 @@ describe 'TextManipulation', ->
         .toEqual({listRange: [1, 46], nonNestedRanges : [[1, 7], [12, 19], [39, 46]]})
 
   describe 'getElementList', ->
+    getEltRanges = (elementList) ->
+      _.map elementList?.elts, (li) -> [li.eltStart, li.eltEnd]
+
     #             01234567890123
     bufferText = '{1,([],2,3),4}'
 
-    it 'should return null when there is no enclosing list', ->
+    it 'returns null when there is no enclosing list', ->
       expect(TextManipulation.getElementList bufferText, [], [0,0])
         .toEqual(null)
 
-    it 'should return the elements of the enclosing list even when index is immediately after opening tag', ->
-      expect((TextManipulation.getElementList bufferText, [], [1,1]).elts)
-        .toEqual(_.map [ [1,2], [3,11], [12,13] ], (r) -> new TextManipulation.ListElement bufferText, r)
+    it 'returns the elements of the enclosing list even when index is immediately after opening tag', ->
+      expect(getEltRanges (TextManipulation.getElementList bufferText, [], [1,1]))
+        .toEqual( [[1,2], [3,11], [12,13]] )
 
-    it 'should return the elements of a nested list', ->
-      expect((TextManipulation.getElementList bufferText, [], [4,4]).elts)
-        .toEqual(_.map [ [4,6], [7,8], [9,10] ], (r) -> new TextManipulation.ListElement bufferText, r)
+    it 'returns the elements of a nested list', ->
+      expect(getEltRanges (TextManipulation.getElementList bufferText, [], [4,4]))
+        .toEqual( [[4,6], [7,8], [9,10]] )
 
-    it 'should return the elements (i.e. []) of an empty list', ->
-      expect((TextManipulation.getElementList bufferText, [], [5,5]).elts)
+    it 'returns the elements (i.e. []) of an empty list', ->
+      expect(getEltRanges (TextManipulation.getElementList bufferText, [], [5,5]))
         .toEqual( [] )
 
-    it 'should allow empty ranges', ->
-      expect((TextManipulation.getElementList '[ ,, ]', [], [1,1]).elts)
-        .toEqual(_.map [ [1,2], [3,3], [4,5] ], (r) -> new TextManipulation.ListElement '[ ,, ]', r)
+    it 'allows empty ranges', ->
+      expect(getEltRanges (TextManipulation.getElementList '[ ,, ]', [], [1,1]))
+        .toEqual( [[2,2], [3,3], [5,5]] )
 
-    it 'should allow empty ranges at start and end', ->
-      expect((TextManipulation.getElementList '[, ,]', [], [1,1]).elts)
-        .toEqual(_.map [ [1,1], [2,3], [4,4] ], (r) -> new TextManipulation.ListElement '[, ,]', r)
+    it 'allows empty ranges at start and end', ->
+      expect(getEltRanges (TextManipulation.getElementList '[, ,]', [], [1,1]))
+        .toEqual( [[1,1], [3,3], [4,4]] )
+
+    #                        0123456789012345678901234
+    bufferTextWithIgnores = '[ "one", "[a,b]", "two" ]'
+    ignoreRanges = []
+    it 'ignores ranges from ignoreRanges', ->
+      expect(getEltRanges (TextManipulation.getElementList bufferTextWithIgnores, ignoreRanges, [13,21]))
+        .toEqual([[2,7], [9,16], [18,23]])
+      expect(getEltRanges (TextManipulation.getElementList bufferTextWithIgnores, ignoreRanges, [21,24]))
+        .toEqual([[2,7], [9,16], [18,23]])
 
   describe 'getSelectionForRange', ->
-    #                                            01234567890123456789012345
-    listElts = (TextManipulation.getElementList '[   Inky , Dinky , Pinky  ]', [], [1,1]).elts
+    #                                            012345678901234567890123456789012345
+    listElts = (TextManipulation.getElementList '[   Blinky , Dinky , Pinky, Clyde  ]', [], [1,1]).elts
 
-    it 'should select a single element when selection is inside the element', ->
+    it 'selects a single element when selection is inside the element', ->
       expect(TextManipulation.getSelectionForRange listElts, [5,5]).toEqual([0,1])
 
-    it 'should select multiple elements when selection starts and ends inside these elements', ->
-      expect(TextManipulation.getSelectionForRange listElts, [3,12]).toEqual([0,2])
+    it 'selects multiple elements when selection starts and ends inside these elements', ->
+      expect(TextManipulation.getSelectionForRange listElts, [5,15]).toEqual([0,2])
 
-    it 'should select a single element when selection surrounds the element', ->
-      expect(TextManipulation.getSelectionForRange listElts, [3,9]).toEqual([0,1])
+    it 'selects a single element when selection surrounds the element', ->
+      expect(TextManipulation.getSelectionForRange listElts, [1,13]).toEqual([0,1])
 
-    it 'should select a all elements when selection surrounds all elements', ->
-      expect(TextManipulation.getSelectionForRange listElts, [1,26]).toEqual([0,3])
+    it 'selects all elements when selection surrounds all elements', ->
+      expect(TextManipulation.getSelectionForRange listElts, [1,35]).toEqual([0,4])
 
-    it 'should select an empty range when selection is in leading whitespace', ->
+    it 'selects an empty range when selection is in leading whitespace', ->
       expect(TextManipulation.getSelectionForRange listElts, [2,3]).toEqual([0,0])
 
-    it 'should select an empty range when selection is in trailing whitespace', ->
-      expect(TextManipulation.getSelectionForRange listElts, [24,25]).toEqual([3,3])
+    it 'selects an empty range when selection is in trailing whitespace', ->
+      expect(TextManipulation.getSelectionForRange listElts, [33,34]).toEqual([4,4])
 
-    it 'should select an empty range when selection surrounds single separator', ->
-      expect(TextManipulation.getSelectionForRange listElts, [9,10]).toEqual([1,1])
+    it 'selects an empty range when selection surrounds single separator', ->
+      expect(TextManipulation.getSelectionForRange listElts, [11,12]).toEqual([1,1])
 
     it 'should select a single element when selection surrounds the element and adjoining separators', ->
-      expect(TextManipulation.getSelectionForRange listElts, [9,18]).toEqual([1,2])
+      expect(TextManipulation.getSelectionForRange listElts, [11,20]).toEqual([1,2])
 
   describe 'findRangeForIndex', ->
     ignoreRanges = [[1,2],[3,4],[5,6],[7,8],[9,10]]

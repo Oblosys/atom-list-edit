@@ -14,6 +14,8 @@ describe 'ListEdit', ->
         atom.commands.dispatch editorView, 'list-edit:copy'
         # Activate package with a neutral list-edit:copy, so the test edit commands don't have to deal with activation.
         activationPromise
+        # TODO: Would be nice if we could do this just once, instead of for each spec, but waitsForPromise does
+        #       not seem to work in describe (unlike what the documentation suggests.)
 
   describe 'list-cut', ->
     it 'Cursor inside element in singleton list cuts element and whitespace', ->
