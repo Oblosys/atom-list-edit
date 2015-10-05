@@ -38,17 +38,18 @@ module.exports = TextManipulation =
     if not containingList?
       null
     else
-      {listRange: [listStartIx,listEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
+      {listRange: [listWSStartIx,listWSEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
+      listRangeTxt = bufferText.slice listWSStartIx, listWSEndIx
+      initialWhitespace = @getLeadingWhitespace listRangeTxt
+      finalWhitespace = if initialWhitespace.length is listRangeTxt.length
+                          '' # listRangeTxt is all whitespace, which we take to be the leading whitespace
+                        else
+                          @getTrailingWhitespace(listRangeTxt)
+      listStartIx = listWSStartIx + initialWhitespace.length
+      listEndIx   = listWSEndIx   - finalWhitespace.length
+      elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
+      # @showIxRanges bufferText, elementRanges
       listElements =
-        if (bufferText.slice listStartIx, listEndIx).match(/^\s*$/)
-          # Because empty elements are allowed, "[\s*]" will be interpreted as a list with single empty element
-          # TODO: For now, disallow this, as it requires some changes to the model to accomodate the whitespace in an empty list
-          []
-        else
-          #nonNestedIxRanges = leftIxRanges.concat rightIxRanges
-          elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
-          # @showIxRanges bufferText, elementRanges
-
           _.map elementRanges, (r) ->
             new ListElement(bufferText, r)
 
@@ -64,6 +65,8 @@ module.exports = TextManipulation =
       # sep will be null for empty lists and singletons
       { startIx: listStartIx, endIx: listEndIx
       , openBracket: bufferText[listStartIx-1]
+      , initialWhitespace: initialWhitespace # whitespace trailing opening bracket
+      , finalWhitespace:   finalWhitespace   # whitespace leading closing bracket
       , separator: separator
       , elts: listElements
       }
@@ -176,14 +179,20 @@ module.exports = TextManipulation =
 
   # Convert list of ranges that cover the entire list except its sublists, to ranges for its elements.
   # The first separator encountered is expected to be the separator for the entire list.
+  # NOTE: nonNestedRanges may start before startIx and end after endIx, but only element ranges in the
+  #       range [startIx, endIx> will be returned.
   getElementRangesFromNonNested: (bufferText, startIx, endIx, nonNestedRanges) ->
-    # By using nonNestedRanges, we can easily skip the sublists
+    # Because lists with empty elements are not uncommon, we return empty element ranges for empty or whitespace-only
+    # ranges between separators. If the entire list is empty, however, we return no element ranges.
+    if startIx == endIx
+      return []
+
     elementRanges = []
     elementStart = startIx
     separator = null
 
-    for nonNestedRange in nonNestedRanges
-      [rangeStart, rangeEnd] = nonNestedRange
+    # By using nonNestedRanges, we can easily skip the sublists
+    for [rangeStart, rangeEnd] in nonNestedRanges
       # console.log 'range: ' + rangeStart + ' ' + rangeEnd
       ix = rangeStart
 

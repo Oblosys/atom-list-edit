@@ -117,7 +117,7 @@ describe 'TextManipulation', ->
 
     it 'allows empty ranges', ->
       expect(getEltRanges (TextManipulation.getElementList '[ ,, ]', [], [1,1]))
-        .toEqual( [[2,2], [3,3], [5,5]] )
+        .toEqual( [[2,2], [3,3], [4,4]] )
 
     it 'allows empty ranges at start and end', ->
       expect(getEltRanges (TextManipulation.getElementList '[, ,]', [], [1,1]))
