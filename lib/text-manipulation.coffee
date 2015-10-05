@@ -14,7 +14,10 @@ class ListElement
     [@start, @end] = range
     element = bufferText.slice @start, @end
     @leadingWhitespace  = TextManipulation.getLeadingWhitespace(element)
-    @trailingWhitespace = TextManipulation.getTrailingWhitespace(element)
+    @trailingWhitespace = if @leadingWhitespace.length is element.length
+                            '' # element is all whitespace, which we take to be the leading whitespace
+                          else
+                            TextManipulation.getTrailingWhitespace(element)
     @eltStart = @start + @leadingWhitespace.length
     @eltEnd = @end - @trailingWhitespace.length
     @strippedElement = bufferText.slice @eltStart, @eltEnd
