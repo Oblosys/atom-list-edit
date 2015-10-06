@@ -125,11 +125,9 @@ describe 'TextManipulation', ->
 
     #                        0123456789012345678901234
     bufferTextWithIgnores = '[ "one", "[a,b]", "two" ]'
-    ignoreRanges = []
-    it 'ignores ranges from ignoreRanges', ->
-      expect(getEltRanges (TextManipulation.getElementList bufferTextWithIgnores, ignoreRanges, [13,21]))
-        .toEqual([[2,7], [9,16], [18,23]])
-      expect(getEltRanges (TextManipulation.getElementList bufferTextWithIgnores, ignoreRanges, [21,24]))
+    ignoreRanges = [[2,7], [9,16], [18,23]]
+    fit 'ignores brackets and separators in ignoreRanges', ->
+      expect(getEltRanges (TextManipulation.getElementList bufferTextWithIgnores, ignoreRanges, [11,14]))
         .toEqual([[2,7], [9,16], [18,23]])
 
   describe 'getSelectionForRange', ->
