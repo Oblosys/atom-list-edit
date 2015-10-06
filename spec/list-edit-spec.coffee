@@ -3,6 +3,11 @@ ListEdit = require '../lib/list-edit'
 describe 'ListEdit', ->
   [editor, editorView] = []
 
+  listCopyFrom = (txt, startRow, startCol, endRow=startRow, endCol=startCol) ->
+    editor.setText txt
+    editor.setSelectedBufferRange [[startRow, startCol], [endRow, endCol]]
+    atom.commands.dispatch editorView, 'list-edit:copy'
+
   beforeEach ->
     waitsForPromise ->
       atom.workspace.open().then ->
@@ -37,39 +42,35 @@ describe 'ListEdit', ->
       expect(editor.getText()).toBe '[Blinky, Inky, Clyde]'
 
   describe 'list-paste', ->
-    it 'Cursor before first element of multi-element list pastes clipboard element with correct whitespace and separator', ->
-      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+    it 'pastes clipboard element with correct whitespace and separator when cursor is before first element of multi-element list', ->
+      listCopyFrom '[NewGhost]', 0, 2
       editor.setText '[Blinky, Pinky, Inky, Clyde]'
       editor.setCursorBufferPosition [0, 1]
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '[NewGhost, Blinky, Pinky, Inky, Clyde]'
 
-    it 'Cursor before between elements of multi-element list pastes clipboard element with correct whitespace and separator', ->
-      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+    it 'pastes clipboard element with correct whitespace and separator when cursor is before between elements of multi-element list', ->
+      listCopyFrom '[NewGhost]', 0, 2
       editor.setText '[Blinky, Pinky, Inky, Clyde]'
       editor.setCursorBufferPosition [0, 7]
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '[Blinky, NewGhost, Pinky, Inky, Clyde]'
 
-    it 'Cursor after last element of multi-element list pastes clipboard element with correct whitespace and separator', ->
-      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+    it 'pastes clipboard element with correct whitespace and separator when cursor is after last element of multi-element list', ->
+      listCopyFrom '[NewGhost]', 0, 2
       editor.setText '[Blinky, Pinky, Inky, Clyde]'
       editor.setCursorBufferPosition [0, 27]
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '[Blinky, Pinky, Inky, Clyde, NewGhost]'
 
-    it 'Cursor inside element of multi-element list replaces element with clipboard element', ->
-      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+    it 'replaces element with clipboard element when cursor is inside element of multi-element list', ->
+      listCopyFrom '[NewGhost]', 0, 2
       editor.setText '[Blinky, Pinky, Inky, Clyde]'
       editor.setCursorBufferPosition [0, 10]
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '[Blinky, NewGhost, Inky, Clyde]'
 
   describe 'list-copy/paste between lists', ->
-    listCopyFrom = (txt, row, col) ->
-      editor.setText txt
-      editor.setCursorBufferPosition [row, col]
-      atom.commands.dispatch editorView, 'list-edit:copy'
 
   # 0123456789012345678
     verticalListTxt = '''
