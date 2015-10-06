@@ -13,8 +13,8 @@ module.exports =
     # Register package commands
     @subscriptions.add atom.commands.add 'atom-text-editor',
       'list-edit:select': => @selectCmd()
-      'list-edit:cut':    => @cutCmd()
       'list-edit:copy':   => @copyCmd()
+      'list-edit:cut':    => @cutCmd()
       'list-edit:paste':  => @pasteCmd()
 
   deactivate: ->
@@ -39,6 +39,29 @@ module.exports =
 
           editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
                                           [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
+
+  copyCmd: ->
+    console.log 'Executing command list-edit-copy'
+    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
+      { startIx: listStartIx, endIx: listEndIx
+      , openBracket: openBracket, separator: separator
+      , initialWhitespace: initialWhitespace, finalWhitespace: finalWhitespace
+      , elts: listElements
+      } = elementList
+      if listElements.length == 0
+        atom.notifications.addWarning 'List copy in empty list.'
+      else
+        if selStart == selEnd
+          atom.notifications.addWarning 'Empty list selection.'
+          # TODO: on empty, expand selection?
+        else
+          selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
+          # Clip includes separators, which seems logical when we use it for a non-list paste
+          #console.log "Copied: '#{selectionText}'"
+          console.log 'Separator: ' + JSON.stringify separator
+          atom.clipboard.write selectionText, @mkListEditMeta(openBracket, separator, initialWhitespace, finalWhitespace)
+          editor.setSelectedBufferRange (TextManipulation.getRangeForIxRange textBuffer,
+                                           [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
   cutCmd: ->
     console.log 'Executing command list-edit-cut'
@@ -89,29 +112,6 @@ module.exports =
           cutRange = TextManipulation.getRangeForIxRange textBuffer, cutIxRange
           # editor.setSelectedBufferRange cutRange # for debugging: select the range that will be cut
           textBuffer.delete cutRange
-
-  copyCmd: ->
-    console.log 'Executing command list-edit-copy'
-    @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
-      { startIx: listStartIx, endIx: listEndIx
-      , openBracket: openBracket, separator: separator
-      , initialWhitespace: initialWhitespace, finalWhitespace: finalWhitespace
-      , elts: listElements
-      } = elementList
-      if listElements.length == 0
-        atom.notifications.addWarning 'List copy in empty list.'
-      else
-        if selStart == selEnd
-          atom.notifications.addWarning 'Empty list selection.'
-          # TODO: on empty, expand selection?
-        else
-          selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
-          # Clip includes separators, which seems logical when we use it for a non-list paste
-          #console.log "Copied: '#{selectionText}'"
-          console.log 'Separator: ' + JSON.stringify separator
-          atom.clipboard.write selectionText, @mkListEditMeta(openBracket, separator, initialWhitespace, finalWhitespace)
-          editor.setSelectedBufferRange (TextManipulation.getRangeForIxRange textBuffer,
-                                           [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
   pasteCmd: ->
     console.log 'Executing command list-edit-paste'
