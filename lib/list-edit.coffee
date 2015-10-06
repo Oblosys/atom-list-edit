@@ -63,7 +63,7 @@ module.exports =
             if cutEnd == listElements.length
               # No remaining elements: also cut surrounding whitespace
               # console.log "Cut [> elt .. elt <]"
-              cutIxRange = [listElements[cutStart].start, listElements[cutEnd-1].end]
+              cutIxRange = [listStartIx, listEndIx]
             else
               # Remaining elements only after cut: remove trailing separator
               # console.log "Cut [ >elt .. elt, <elt .. ]"

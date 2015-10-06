@@ -38,16 +38,16 @@ module.exports = TextManipulation =
     if not containingList?
       null
     else
-      {listRange: [listWSStartIx,listWSEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
-      listRangeTxt = bufferText.slice listWSStartIx, listWSEndIx
+      {listRange: [listStartIx,listEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
+      listRangeTxt = bufferText.slice listStartIx, listEndIx
       initialWhitespace = @getLeadingWhitespace listRangeTxt
       finalWhitespace = if initialWhitespace.length is listRangeTxt.length
                           '' # listRangeTxt is all whitespace, which we take to be the leading whitespace
                         else
                           @getTrailingWhitespace(listRangeTxt)
-      listStartIx = listWSStartIx + initialWhitespace.length
-      listEndIx   = listWSEndIx   - finalWhitespace.length
-      elementRanges = @getElementRangesFromNonNested bufferText, listStartIx, listEndIx, nonNestedIxRanges
+      listEltsStartIx = listStartIx + initialWhitespace.length
+      listEltsEndIx   = listEndIx   - finalWhitespace.length
+      elementRanges = @getElementRangesFromNonNested bufferText, listEltsStartIx, listEltsEndIx, nonNestedIxRanges
       # @showIxRanges bufferText, elementRanges
       listElements =
           _.map elementRanges, (r) ->
@@ -63,11 +63,11 @@ module.exports = TextManipulation =
           {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace}
 
       # sep will be null for empty lists and singletons
-      { startIx: listStartIx, endIx: listEndIx
+      { startIx: listStartIx, endIx: listEndIx # start and end of the range inside the brackets
       , openBracket: bufferText[listStartIx-1]
-      , initialWhitespace: initialWhitespace # whitespace trailing opening bracket
-      , finalWhitespace:   finalWhitespace   # whitespace leading closing bracket
-      , separator: separator
+      , initialWhitespace: initialWhitespace   # whitespace trailing opening bracket
+      , finalWhitespace:   finalWhitespace     # whitespace leading closing bracket
+      , separator: separator                   # {leadingWhitespace: string, sepChar: string, trailingWhitespace: string}
       , elts: listElements
       }
 
