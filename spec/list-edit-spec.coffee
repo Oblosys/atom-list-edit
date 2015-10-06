@@ -36,34 +36,75 @@ describe 'ListEdit', ->
       atom.commands.dispatch editorView, 'list-edit:cut'
       expect(editor.getText()).toBe '[Blinky, Inky, Clyde]'
 
-    describe 'list-paste', ->
-      it 'Cursor before first element of multi-element list pastes clipboard element with correct whitespace and separator', ->
-        atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
-        editor.setText '[Blinky, Pinky, Inky, Clyde]'
-        editor.setCursorBufferPosition [0, 1]
-        atom.commands.dispatch editorView, 'list-edit:paste'
-        expect(editor.getText()).toBe '[NewGhost, Blinky, Pinky, Inky, Clyde]'
+  describe 'list-paste', ->
+    it 'Cursor before first element of multi-element list pastes clipboard element with correct whitespace and separator', ->
+      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+      editor.setText '[Blinky, Pinky, Inky, Clyde]'
+      editor.setCursorBufferPosition [0, 1]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '[NewGhost, Blinky, Pinky, Inky, Clyde]'
 
-      it 'Cursor before between elements of multi-element list pastes clipboard element with correct whitespace and separator', ->
-        atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
-        editor.setText '[Blinky, Pinky, Inky, Clyde]'
-        editor.setCursorBufferPosition [0, 7]
-        atom.commands.dispatch editorView, 'list-edit:paste'
-        expect(editor.getText()).toBe '[Blinky, NewGhost, Pinky, Inky, Clyde]'
+    it 'Cursor before between elements of multi-element list pastes clipboard element with correct whitespace and separator', ->
+      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+      editor.setText '[Blinky, Pinky, Inky, Clyde]'
+      editor.setCursorBufferPosition [0, 7]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '[Blinky, NewGhost, Pinky, Inky, Clyde]'
 
-      it 'Cursor after last element of multi-element list pastes clipboard element with correct whitespace and separator', ->
-        atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
-        editor.setText '[Blinky, Pinky, Inky, Clyde]'
-        editor.setCursorBufferPosition [0, 27]
-        atom.commands.dispatch editorView, 'list-edit:paste'
-        expect(editor.getText()).toBe '[Blinky, Pinky, Inky, Clyde, NewGhost]'
+    it 'Cursor after last element of multi-element list pastes clipboard element with correct whitespace and separator', ->
+      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+      editor.setText '[Blinky, Pinky, Inky, Clyde]'
+      editor.setCursorBufferPosition [0, 27]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '[Blinky, Pinky, Inky, Clyde, NewGhost]'
 
-      it 'Cursor inside element of multi-element list replaces element with clipboard element', ->
-        atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
-        editor.setText '[Blinky, Pinky, Inky, Clyde]'
-        editor.setCursorBufferPosition [0, 10]
-        atom.commands.dispatch editorView, 'list-edit:paste'
-        expect(editor.getText()).toBe '[Blinky, NewGhost, Inky, Clyde]'
+    it 'Cursor inside element of multi-element list replaces element with clipboard element', ->
+      atom.clipboard.write 'NewGhost', ListEdit.mkListEditMeta('[', ',')
+      editor.setText '[Blinky, Pinky, Inky, Clyde]'
+      editor.setCursorBufferPosition [0, 10]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '[Blinky, NewGhost, Inky, Clyde]'
+
+  describe 'list-copy/paste between lists', ->
+    listCopyFrom = (txt, row, col) ->
+      editor.setText txt
+      editor.setCursorBufferPosition [row, col]
+      atom.commands.dispatch editorView, 'list-edit:copy'
+
+  # 0123456789012345678
+    verticalListTxt = '''
+    vertical = [ Larry
+               , Moe
+               , Curly
+               ]
+    '''
+
+    it 'uses separator whitespace from the target, if available', ->
+      listCopyFrom verticalListTxt, 1, 14 # copy Moe
+      #               01234567890123456789012345678901234567890
+      editor.setText '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]'
+      editor.setCursorBufferPosition [0, 11]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '[   Blinky ,  Moe ,  Pinky ,  Inky ,  Clyde   ]'
+
+    it 'uses separator whitespace from the source, if not available from target', ->
+      listCopyFrom   '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]', 0, 32 # copy Clyde
+      #               01234567890123456789012345678901234567890
+      editor.setText '[  Blinky  ]'
+      editor.setCursorBufferPosition [0, 11]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '[  Blinky ,  Clyde  ]'
+
+    # Not ideal, as we throw away the bracket whitespace already present, but it seems more logical
+    # than splitting the existing whitespace into initial and final, and also, on cutting all elements,
+    # we remove initial and final whitespace as well.
+    it 'uses bracket whitespace from the source, if not available from target', ->
+      listCopyFrom   '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]', 0, 32 # copy Clyde
+      #               01234567890123456789012345678901234567890
+      editor.setText '[  ]'
+      editor.setCursorBufferPosition [0, 2]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '[   Clyde   ]'
 
 describe 'ListEdit on a file with a JavaScript grammar', ->
   [editor, editorView] = []
