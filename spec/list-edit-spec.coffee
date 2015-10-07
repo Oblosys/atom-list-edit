@@ -22,6 +22,21 @@ describe 'ListEdit', ->
         # TODO: Would be nice if we could do this just once, instead of for each spec, but waitsForPromise does
         #       not seem to work in describe (unlike what the documentation suggests.)
 
+  describe 'list-copy', ->
+    it 'copies the selected range to the clipboard', ->
+      #               01234567890123456789012345678901234567890
+      editor.setText '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]'
+      editor.setSelectedBufferRange [[0, 15], [0,24]] # Pinky & Clyde
+      atom.commands.dispatch editorView, 'list-edit:copy'
+      clip = atom.clipboard.readWithMetadata()
+      expect(clip?.text).toBe('Pinky ,  Inky')
+      expect(clip?.metadata).toEqual(
+        { id : 'list-edit-clip-meta', openBracket : '['
+        , initialWhitespace : '   ', finalWhitespace : '   '
+        , separator : { leadingWhitespace: ' ', sepChar : ',', trailingWhitespace : '  ' }
+        , eltRanges : [ [0, 5], [9, 13] ]
+        })
+
   describe 'list-cut', ->
     it 'Cursor inside element in singleton list cuts element and whitespace', ->
       editor.setText '[ Single ]'
