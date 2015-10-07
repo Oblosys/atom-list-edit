@@ -144,6 +144,16 @@ describe 'ListEdit on a file with a JavaScript grammar', ->
     editor.setSelectedBufferRange [[0, 14], [0,33]]
     atom.commands.dispatch editorView, 'list-edit:cut'
     expect(editor.getText()).toBe '[Blinky]'
+
+    clip = atom.clipboard.readWithMetadata()
+    expect(clip?.text).toBe('"P[ inky", /*Inky,*/ \'Cly]de\'')
+    expect(clip?.metadata).toEqual(
+      { id : 'list-edit-clip-meta', openBracket : '['
+      , initialWhitespace : '', finalWhitespace : ''
+      , separator : { leadingWhitespace : '', sepChar : ',', trailingWhitespace : ' ' }
+      , eltRanges : [ [0, 9], [11, 29] ]
+      })
+
     editor.setCursorBufferPosition [0, 1]
     atom.commands.dispatch editorView, 'list-edit:paste'
     expect(editor.getText()).toBe '["P[ inky", /*Inky,*/ \'Cly]de\', Blinky]'
