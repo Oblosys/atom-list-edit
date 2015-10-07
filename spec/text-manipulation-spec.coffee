@@ -194,7 +194,7 @@ describe 'TextManipulation', ->
     #                        0123456789012345678901234
     bufferTextWithIgnores = '[ "one", "[a,b]", "two" ]'
     ignoreRanges = [[2,7], [9,16], [18,23]]
-    fit 'ignores brackets and separators in ignoreRanges', ->
+    it 'ignores brackets and separators in ignoreRanges', ->
       expect(getEltRanges (TextManipulation.getElementList bufferTextWithIgnores, ignoreRanges, [11,14]))
         .toEqual([[2,7], [9,16], [18,23]])
 
@@ -290,7 +290,7 @@ describe 'TextManipulation', ->
     it 'handles index inside ignore', ->
       expect(TextManipulation.forwardSkipIgnored ignoreRanges, 5)
         .toEqual(6)
-        
+
     it 'handles index immediately after ignore', ->
       expect(TextManipulation.forwardSkipIgnored ignoreRanges, 6)
         .toEqual(6)

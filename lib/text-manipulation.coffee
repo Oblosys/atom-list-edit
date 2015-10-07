@@ -100,10 +100,10 @@ module.exports = TextManipulation =
   findMatchingOpeningBracket: (bufferText, ignoreRanges, startIx, isNested, closingBracket) ->
     # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
     ranges = []
-    rangeEnd = startIx
     ix = @backwardSkipIgnored ignoreRanges, startIx
+    rangeEnd = ix
     while ix > 0
-      currentChar = bufferText[ix-1]
+      currentChar = bufferText[ix-1] # NOTE: ix is after the current character, unlike findMatchingClosingBracket
 
       if @isOpeningBracket currentChar
         if closingBracket? && currentChar != @getOpeningBracketFor closingBracket
@@ -117,9 +117,13 @@ module.exports = TextManipulation =
         res = @findMatchingOpeningBracket bufferText, ignoreRanges, ix-1, true, currentChar
         break if not res?
         ix = res.bracketIx+1
-        rangeEnd = ix-1
+        rangeEnd = res.bracketIx
 
-      ix  = @backwardSkipIgnored ignoreRanges,  ix-1
+      beforeSkipIx = ix-1
+      ix = @backwardSkipIgnored ignoreRanges, beforeSkipIx
+      if ix != beforeSkipIx
+        @unshiftRange ranges, beforeSkipIx, rangeEnd, isNested
+        rangeEnd = ix
 
     return null # list not well formed, or no list
 
@@ -129,8 +133,8 @@ module.exports = TextManipulation =
   findMatchingClosingBracket: (bufferText, ignoreRanges, startIx, isNested, openingBracket) ->
     # console.log "findMatchingClosingBracket: " + startIx + (if openingBracket? then openingBracket else "any opening bracket")
     ranges = []
-    rangeStart = startIx
     ix = @forwardSkipIgnored ignoreRanges, startIx
+    rangeStart = ix
     while ix < bufferText.length
       currentChar = bufferText[ix]
 
@@ -146,9 +150,13 @@ module.exports = TextManipulation =
         res = @findMatchingClosingBracket bufferText, ignoreRanges, ix+1, true, currentChar
         break if not res?
         ix = res.bracketIx
-        rangeStart = ix+1
+        rangeStart = res.bracketIx+1
 
-      ix = @forwardSkipIgnored ignoreRanges, ix+1
+      beforeSkipIx = ix+1
+      ix = @forwardSkipIgnored ignoreRanges, beforeSkipIx
+      if ix != beforeSkipIx
+        @pushRange ranges, rangeStart, beforeSkipIx, isNested
+        rangeStart = ix
 
     return null # list not well formed, or no list)
 
@@ -170,12 +178,14 @@ module.exports = TextManipulation =
     null
 
   # PRECONDITION: ranges do not connect (i.e. there is at least one element in between)
-  backwardSkipIgnored: (ignoreRanges, ix) ->
-    (@findRangeForIndex ignoreRanges, ix)?[0] ? ix
-
-  # PRECONDITION: ranges do not connect (i.e. there is at least one element in between)
   forwardSkipIgnored: (ignoreRanges, ix) ->
     (@findRangeForIndex ignoreRanges, ix)?[1] ? ix
+
+  # PRECONDITION: ranges do not connect (i.e. there is at least one element in between)
+  # NOTE: for backwardSkipIgnored, ix denotes a position after the character, so it skips
+  #       if the preceding character is in a skip range: e.g. backwardSkipIgnored([[1,2]],2) == 1
+  backwardSkipIgnored: (ignoreRanges, ix) ->
+    (@findRangeForIndex ignoreRanges, ix-1)?[0] ? ix
 
   # Convert list of ranges that cover the entire list except its sublists, to ranges for its elements.
   # The first separator encountered is expected to be the separator for the entire list.
