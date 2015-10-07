@@ -95,7 +95,7 @@ describe 'ListEdit', ->
                ]
     '''
 
-    it 'uses separator whitespace from the target, if available', ->
+    it 'uses separator whitespace from the target, if available (single-element clip)', ->
       listCopyFrom verticalListTxt, 1, 14 # copy Moe
       #               01234567890123456789012345678901234567890
       editor.setText '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]'
@@ -103,7 +103,7 @@ describe 'ListEdit', ->
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '[   Blinky ,  Moe ,  Pinky ,  Inky ,  Clyde   ]'
 
-    it 'uses separator whitespace from the source, if not available from target', ->
+    it 'uses separator whitespace from the source, if not available from target (single-element clip)', ->
       listCopyFrom   '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]', 0, 32 # copy Clyde
       #               01234567890123456789012345678901234567890
       editor.setText '[  Blinky  ]'
@@ -111,8 +111,24 @@ describe 'ListEdit', ->
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '[  Blinky ,  Clyde  ]'
 
-    # Not ideal, as we throw away the bracket whitespace already present, but it seems more logical
-    # than splitting the existing whitespace into initial and final, and also, on cutting all elements,
+    it 'uses separator and whitespace from the target, if available (multi-element clip)', ->
+      listCopyFrom verticalListTxt, 1, 14, 2, 14 # copy Moe & Curly
+      #               01234567890123456789012345678901234567890
+      editor.setText '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]'
+      editor.setCursorBufferPosition [0, 11]
+      atom.commands.dispatch editorView, 'list-edit:paste' # paste between Blinky & Pinky
+      expect(editor.getText()).toBe '[   Blinky ,  Moe ,  Curly ,  Pinky ,  Inky ,  Clyde   ]'
+
+    it 'uses separator whitespace from the source, if not available from target (multi-element clip)', ->
+      listCopyFrom   '{   Blinky ,  Pinky ,  Inky ,  Clyde   }', 0, 24, 0, 32 # copy Inky & Clyde
+      #               01234567890123456789012345678901234567890
+      editor.setText '{  Blinky  }'
+      editor.setCursorBufferPosition [0, 11]
+      atom.commands.dispatch editorView, 'list-edit:paste' # paste after Blinky
+      expect(editor.getText()).toBe '{  Blinky ,  Inky ,  Clyde  }'
+
+    # Not ideal, as we throw away any existing bracket whitespace, but it seems more logical than
+    # splitting the existing whitespace into initial and final, and moreover, on cutting all elements,
     # we remove initial and final whitespace as well.
     it 'uses bracket whitespace from the source, if not available from target', ->
       listCopyFrom   '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]', 0, 32 # copy Clyde

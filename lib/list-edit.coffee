@@ -59,7 +59,7 @@ module.exports =
           # Clip includes separators, which seems logical when we use it for a non-list paste
           #console.log "Copied: '#{selectionText}'"
           console.log 'Separator: ' + JSON.stringify separator
-          atom.clipboard.write selectionText, @mkListEditMeta(openBracket, separator, initialWhitespace, finalWhitespace)
+          atom.clipboard.write selectionText, @mkListEditMeta elementList, selStart, selEnd
           editor.setSelectedBufferRange (TextManipulation.getRangeForIxRange textBuffer,
                                            [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
@@ -85,7 +85,7 @@ module.exports =
 
           # copy selected elements to clipboard
           selectionText = bufferText.slice listElements[cutStart].eltStart, listElements[cutEnd-1].eltEnd
-          atom.clipboard.write selectionText, @mkListEditMeta(openBracket, separator, initialWhitespace, finalWhitespace)
+          atom.clipboard.write selectionText, @mkListEditMeta elementList, cutStart, cutEnd
 
           if cutStart == 0
             if cutEnd == listElements.length
@@ -142,30 +142,30 @@ module.exports =
 
         {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace} =
           separator
+        clipElts = (clip.text.slice eltStartIx, eltEndIx for [eltStartIx, eltEndIx] in clipMeta.eltRanges)
+        clipEltsText = clipElts.join sepLeadingWhitespace + sepChar + sepTrailingWhitespace
+
         if selStart != selEnd
           # if an element or a range is selected, all surrounding whitespace can be left untouched
           # (assuming the clip comes from the same list)
           pasteIxRange = [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd]
-          pasteText = clip.text
-          # TODO: What to do with multi-element clips? These will contain separators of their own.
-          #       Modify to match target list? Mismatch between the two will probably be rather rare.
-          #       But we might as well do it, since we need to adapt the whitespace to the new list anyway.
+          pasteText = clipEltsText
         else
           # empty target range
           if listElements.length == 0
             console.log 'Paste in empty list'
             pasteIxRange = [listStartIx, listEndIx]
-            pasteText = clipMeta.initialWhitespace + clip.text + clipMeta.finalWhitespace
+            pasteText = clipMeta.initialWhitespace + clipEltsText + clipMeta.finalWhitespace
           else
             console.log 'Paste on non-empty list'
             if selStart < listElements.length
               console.log '  not after last element'
               pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
-              pasteText = clip.text + sepLeadingWhitespace + sepChar + sepTrailingWhitespace
+              pasteText = clipEltsText + sepLeadingWhitespace + sepChar + sepTrailingWhitespace
             else
               console.log '  after last element'
               pasteIxRange = [listElements[selStart-1].eltEnd,listElements[selStart-1].eltEnd] # immediately in after of preceding element
-              pasteText = sepLeadingWhitespace + sepChar + sepTrailingWhitespace + clip.text
+              pasteText = sepLeadingWhitespace + sepChar + sepTrailingWhitespace + clipEltsText
 
         pasteRange = TextManipulation.getRangeForIxRange textBuffer, pasteIxRange
         textBuffer.setTextInRange pasteRange, pasteText
@@ -191,11 +191,21 @@ module.exports =
           # Can also use => in the definition of the callbacks that require @, but this is safer
           (callback.bind this) editor, textBuffer, bufferText, selectionIxRange, elementList, listSelection
 
-  # TODO: Probably easier to just pass the entire elementList
-  mkListEditMeta: (openBracket, separator, initialWhitespace, finalWhitespace) ->
+  mkListEditMeta: (elementList, selStart, selEnd) ->
+    { startIx: listStartIx, endIx: listEndIx
+    , openBracket: openBracket, separator: separator
+    , initialWhitespace: initialWhitespace, finalWhitespace: finalWhitespace
+    , elts: listElements
+    } = elementList
+
+    clipStartIx = listElements?[selStart]?.eltStart
+    eltRanges =
+      [listElements[i].eltStart-clipStartIx, listElements[i].eltEnd-clipStartIx] for i in [selStart..selEnd-1]
+
     { id: 'list-edit-clip-meta', openBracket: openBracket
     , initialWhitespace: initialWhitespace, finalWhitespace: finalWhitespace
     , separator: separator
+    , eltRanges: eltRanges
     }
 
   getListEditMeta: (clip) ->
