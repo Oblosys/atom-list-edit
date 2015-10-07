@@ -31,55 +31,6 @@ describe 'TextManipulation', ->
     expect(TextManipulation.stripTrailingWhitespace (leadingWhitespace+trailingWhitespace))
       .toBe('')
 
-  describe 'findMatchingOpeningBracket', ->
-    #             0123456789012
-    bufferText = '[1,[1,2,[]]]'
-    it 'handles index at end of nested list', ->
-      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 11, false)
-       .toEqual({bracketIx: 0, ranges: [ [1,3] ]})
-
-    it 'handles index at end of nested list contents', ->
-      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 10, false)
-       .toEqual({bracketIx: 3, ranges: [ [4,8] ]})
-
-    it 'handles index at start of nested nested list contents', ->
-      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 9, false)
-       .toEqual({bracketIx: 8, ranges: [  ]})
-
-    it 'handles index at start of nested nested list', ->
-      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 8, false)
-       .toEqual({bracketIx: 3, ranges: [ [4,8] ]})
-
-    it 'handles index at start of list contents', ->
-      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 1, false)
-       .toEqual({bracketIx: 0, ranges: [  ]})
-
-    #                 01234567890123
-    nestedListText = '[xxx[xxx]xxx]'
-    it 'handles ignoredRange preceding nested list', ->
-      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[2,3]], 11, false)
-       .toEqual({bracketIx: 0, ranges: [ [1, 2], [3, 4], [9, 11] ]})
-
-    it 'handles ignoredRange immediately preceding nested list', ->
-      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[2,4]], 11, false)
-       .toEqual({bracketIx: 0, ranges: [ [1, 2], [9, 11] ]})
-
-    it 'handles ignoredRange spanning start of nested list', ->
-      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[2,5]], 11, false)
-       .toEqual(null)
-
-    it 'handles ignoredRange following nested list', ->
-      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[10, 11]], 11, false)
-       .toEqual({bracketIx: 0, ranges: [ [1, 4], [9, 10] ]})
-
-    it 'handles ignoredRange immediately following nested list', ->
-      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[9,11]], 11, false)
-       .toEqual({bracketIx: 0, ranges: [ [1, 4] ]})
-
-    it 'handles index inside ignoredRange', ->
-      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[3, 11]], 10, false)
-       .toEqual({bracketIx: 0, ranges: [ [1, 3] ]})
-
   describe 'findMatchingClosingBracket', ->
     #             01234567890123
     bufferText = '[1,[[],2,3],4]'
@@ -128,6 +79,55 @@ describe 'TextManipulation', ->
     it 'handles index inside ignoredRange', ->
       expect(TextManipulation.findMatchingClosingBracket nestedListText, [[2, 10]], 3, false)
        .toEqual({bracketIx: 12, ranges: [ [10, 12] ]})
+
+  describe 'findMatchingOpeningBracket', ->
+    #             0123456789012
+    bufferText = '[1,[1,2,[]]]'
+    it 'handles index at end of nested list', ->
+      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 11, false)
+       .toEqual({bracketIx: 0, ranges: [ [1,3] ]})
+
+    it 'handles index at end of nested list contents', ->
+      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 10, false)
+       .toEqual({bracketIx: 3, ranges: [ [4,8] ]})
+
+    it 'handles index at start of nested nested list contents', ->
+      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 9, false)
+       .toEqual({bracketIx: 8, ranges: [  ]})
+
+    it 'handles index at start of nested nested list', ->
+      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 8, false)
+       .toEqual({bracketIx: 3, ranges: [ [4,8] ]})
+
+    it 'handles index at start of list contents', ->
+      expect(TextManipulation.findMatchingOpeningBracket bufferText, [], 1, false)
+       .toEqual({bracketIx: 0, ranges: [  ]})
+
+    #                 01234567890123
+    nestedListText = '[xxx[xxx]xxx]'
+    it 'handles ignoredRange preceding nested list', ->
+      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[2,3]], 11, false)
+       .toEqual({bracketIx: 0, ranges: [ [1, 2], [3, 4], [9, 11] ]})
+
+    it 'handles ignoredRange immediately preceding nested list', ->
+      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[2,4]], 11, false)
+       .toEqual({bracketIx: 0, ranges: [ [1, 2], [9, 11] ]})
+
+    it 'handles ignoredRange spanning start of nested list', ->
+      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[2,5]], 11, false)
+       .toEqual(null)
+
+    it 'handles ignoredRange following nested list', ->
+      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[10, 11]], 11, false)
+       .toEqual({bracketIx: 0, ranges: [ [1, 4], [9, 10] ]})
+
+    it 'handles ignoredRange immediately following nested list', ->
+      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[9,11]], 11, false)
+       .toEqual({bracketIx: 0, ranges: [ [1, 4] ]})
+
+    it 'handles index inside ignoredRange', ->
+      expect(TextManipulation.findMatchingOpeningBracket nestedListText, [[3, 11]], 10, false)
+       .toEqual({bracketIx: 0, ranges: [ [1, 3] ]})
 
   describe 'getEnclosingList', ->
     #             01234567890123
@@ -257,25 +257,6 @@ describe 'TextManipulation', ->
       expect(TextManipulation.findRangeForIndex [[1,2],[3,4],[5,6],[7,8]], 3)
         .toEqual([3,4])
 
-  describe 'backwardSkipIgnored', ->
-    ignoreRanges = [[1,2],[4,6],[8,10]]
-
-    it 'handles index after ignore', ->
-      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 7)
-        .toEqual(7)
-
-    it 'handles index immediately after ignore', ->
-      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 6)
-        .toEqual(4)
-
-    it 'handles index inside ignore', ->
-      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 5)
-        .toEqual(4)
-
-    it 'handles index at start of ignore', ->
-      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 4)
-        .toEqual(4)
-
   describe 'forwardSkipIgnored', ->
     ignoreRanges = [[1,2],[4,6],[8,10]]
 
@@ -294,3 +275,22 @@ describe 'TextManipulation', ->
     it 'handles index immediately after ignore', ->
       expect(TextManipulation.forwardSkipIgnored ignoreRanges, 6)
         .toEqual(6)
+
+  describe 'backwardSkipIgnored', ->
+    ignoreRanges = [[1,2],[4,6],[8,10]]
+
+    it 'handles index after ignore', ->
+      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 7)
+        .toEqual(7)
+
+    it 'handles index immediately after ignore', ->
+      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 6)
+        .toEqual(4)
+
+    it 'handles index inside ignore', ->
+      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 5)
+        .toEqual(4)
+
+    it 'handles index at start of ignore', ->
+      expect(TextManipulation.backwardSkipIgnored ignoreRanges, 4)
+        .toEqual(4)

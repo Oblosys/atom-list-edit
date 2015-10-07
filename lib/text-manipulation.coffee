@@ -97,39 +97,6 @@ module.exports = TextManipulation =
     else
       null
 
-  findMatchingOpeningBracket: (bufferText, ignoreRanges, startIx, isNested, closingBracket) ->
-    # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
-    ranges = []
-    ix = @backwardSkipIgnored ignoreRanges, startIx
-    rangeEnd = ix
-    while ix > 0
-      currentChar = bufferText[ix-1] # NOTE: ix is after the current character, unlike findMatchingClosingBracket
-
-      if @isOpeningBracket currentChar
-        if closingBracket? && currentChar != @getOpeningBracketFor closingBracket
-          return null
-        else
-          @unshiftRange ranges, ix, rangeEnd, isNested
-          return {bracketIx: ix-1, ranges: ranges}
-
-      if @isClosingBracket currentChar
-        @unshiftRange ranges, ix, rangeEnd, isNested
-        res = @findMatchingOpeningBracket bufferText, ignoreRanges, ix-1, true, currentChar
-        break if not res?
-        ix = res.bracketIx+1
-        rangeEnd = res.bracketIx
-
-      beforeSkipIx = ix-1
-      ix = @backwardSkipIgnored ignoreRanges, beforeSkipIx
-      if ix != beforeSkipIx
-        @unshiftRange ranges, beforeSkipIx, rangeEnd, isNested
-        rangeEnd = ix
-
-    return null # list not well formed, or no list
-
-  unshiftRange: (ranges, rangeStart, rangeEnd, isNested) ->
-    ranges.unshift [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
-
   findMatchingClosingBracket: (bufferText, ignoreRanges, startIx, isNested, openingBracket) ->
     # console.log "findMatchingClosingBracket: " + startIx + (if openingBracket? then openingBracket else "any opening bracket")
     ranges = []
@@ -162,6 +129,39 @@ module.exports = TextManipulation =
 
   pushRange: (ranges, rangeStart, rangeEnd, isNested) ->
     ranges.push [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
+
+  findMatchingOpeningBracket: (bufferText, ignoreRanges, startIx, isNested, closingBracket) ->
+    # console.log "findMatchingclosingBracket: " + startIx + ' ' + (if closingBracket? then closingBracket else "any closing bracket")
+    ranges = []
+    ix = @backwardSkipIgnored ignoreRanges, startIx
+    rangeEnd = ix
+    while ix > 0
+      currentChar = bufferText[ix-1] # NOTE: ix is after the current character, unlike findMatchingClosingBracket
+
+      if @isOpeningBracket currentChar
+        if closingBracket? && currentChar != @getOpeningBracketFor closingBracket
+          return null
+        else
+          @unshiftRange ranges, ix, rangeEnd, isNested
+          return {bracketIx: ix-1, ranges: ranges}
+
+      if @isClosingBracket currentChar
+        @unshiftRange ranges, ix, rangeEnd, isNested
+        res = @findMatchingOpeningBracket bufferText, ignoreRanges, ix-1, true, currentChar
+        break if not res?
+        ix = res.bracketIx+1
+        rangeEnd = res.bracketIx
+
+      beforeSkipIx = ix-1
+      ix = @backwardSkipIgnored ignoreRanges, beforeSkipIx
+      if ix != beforeSkipIx
+        @unshiftRange ranges, beforeSkipIx, rangeEnd, isNested
+        rangeEnd = ix
+
+    return null # list not well formed, or no list
+
+  unshiftRange: (ranges, rangeStart, rangeEnd, isNested) ->
+    ranges.unshift [rangeStart,rangeEnd] if not isNested && rangeStart != rangeEnd
 
   # Use binary search to return the element of ignoreRanges that contains targetIx, or null
   findRangeForIndex: (ignoreRanges, targetIx) ->
