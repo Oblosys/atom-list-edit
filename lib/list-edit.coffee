@@ -173,7 +173,7 @@ module.exports =
               usingDefaultSep &&= true
 
         if usingDefaultSep
-          atom.notifications.addWarning "List-paste: Separator unknown, using default: '#{defaultSepChar}'"
+          atom.notifications.addWarning "Separator unknown, using default: '#{defaultSepChar}'"
 
         pasteRange = TextManipulation.getRangeForIxRange textBuffer, pasteIxRange
         textBuffer.setTextInRange pasteRange, pasteText
@@ -189,11 +189,11 @@ module.exports =
       ignoreRanges = @scanIgnoreRanges editor, textBuffer, bufferText
       elementList = TextManipulation.getElementList bufferText, ignoreRanges, selectionIxRange
       if not elementList?
-        atom.notifications.addWarning 'List-edit: Selection is not in well-formed list.'
+        atom.notifications.addWarning 'Selection is not in well-formed list.'
       else
         listSelection = TextManipulation.getSelectionForRange elementList.elts, selectionIxRange
         if listSelection.end > elementList.elts.length
-          atom.notifications.addError 'List-edit: INTERNAL ERROR: list selection end outside list.'
+          atom.notifications.addError 'INTERNAL ERROR: list selection end outside list.'
           # Note: Will not occur, just for easily signaling bugs during development.
         else
           # Can also use => in the definition of the callbacks that require @, but this is safer
