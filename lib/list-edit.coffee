@@ -127,14 +127,14 @@ module.exports =
         console.log "Opening bracket: #{openBracket}, separator: #{JSON.stringify separator}, clip separator: #{JSON.stringify clip?.separator}"
 
         separator ?= if clipMeta.openBracket == openBracket and clipMeta.separator
+                       usingDefaultSep = false
                        # console.log 'Using separator from clipboard'
                        clipMeta.separator # Use separator from clipboard only if it comes from a list with equal brackets
                        # TODO: Adapt separator indentation level
                      else
+                       usingDefaultSep = true # may still be set to false below
                        defaultSepChar = TextManipulation.getDefaultSeparatorFor openBracket
-                       atom.notifications.addWarning "List-paste: Separator unknown, using default: '#{defaultSepChar}'"
-                       # TODO: only need to warn when separator is actually used
-                       # console.log 'Using default separator for \'' + openBracket + '\''
+                       console.log 'Using default separator for \'' + openBracket + '\''
                        # TODO: Guess whitespace based on layout of brackets? (horizontal/vertical)
                        #       Put default whitespace in configuration?
                        {leadingWhitespace: '', sepChar: defaultSepChar, trailingWhitespace: ' '}
@@ -144,28 +144,36 @@ module.exports =
           separator
         clipElts = (clip.text.slice eltStartIx, eltEndIx for [eltStartIx, eltEndIx] in clipMeta.eltRanges)
         clipEltsText = clipElts.join sepLeadingWhitespace + sepChar + sepTrailingWhitespace
+        # sepChar is never a default separator, since it implies a multi-element clip, which always has a separator.
 
         if selStart != selEnd
           # if an element or a range is selected, all surrounding whitespace can be left untouched
           # (assuming the clip comes from the same list)
           pasteIxRange = [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd]
           pasteText = clipEltsText
+          usingDefaultSep = false
         else
           # empty target range
           if listElements.length == 0
             console.log 'Paste in empty list'
             pasteIxRange = [listStartIx, listEndIx]
             pasteText = clipMeta.initialWhitespace + clipEltsText + clipMeta.finalWhitespace
+            usingDefaultSep = false
           else
             console.log 'Paste on non-empty list'
             if selStart < listElements.length
               console.log '  not after last element'
               pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
               pasteText = clipEltsText + sepLeadingWhitespace + sepChar + sepTrailingWhitespace
+              usingDefaultSep &&= true
             else
               console.log '  after last element'
               pasteIxRange = [listElements[selStart-1].eltEnd,listElements[selStart-1].eltEnd] # immediately in after of preceding element
               pasteText = sepLeadingWhitespace + sepChar + sepTrailingWhitespace + clipEltsText
+              usingDefaultSep &&= true
+
+        if usingDefaultSep
+          atom.notifications.addWarning "List-paste: Separator unknown, using default: '#{defaultSepChar}'"
 
         pasteRange = TextManipulation.getRangeForIxRange textBuffer, pasteIxRange
         textBuffer.setTextInRange pasteRange, pasteText
