@@ -53,28 +53,32 @@ class Buffer
   setSelectionRange: (range) ->
     range = Range.fromObj(range)
     @$textArea.get(0).selectionStart = @characterIndexForPosition range.start
-    @$textArea.get(0).selectionEnd = @characterIndexForPosition range.end
+    @$textArea.get(0).selectionEnd   = @characterIndexForPosition range.end
 
   delete: (range) ->
     range = Range.fromObj range
     rangeStartIx = @characterIndexForPosition range.start
-    rangeEndIx = @characterIndexForPosition range.end
+    rangeEndIx   = @characterIndexForPosition range.end
     rangeLength = rangeEndIx - rangeStartIx
     selStartIx = @$textArea.get(0).selectionStart
-    selEndIx = @$textArea.get(0).selectionEnd
-    # TODO: fix layout
-    selStartIx = if selStartIx <= rangeStartIx then selStartIx else
-                                                    if selStartIx < rangeEndIx then rangeStartIx else
-                                                                                    selStartIx - rangeLength
-    selEndIx = if selEndIx <= rangeStartIx then selEndIx else if selEndIx < rangeEndIx then rangeStartIx else selEndIx - rangeLength
+    selEndIx   = @$textArea.get(0).selectionEnd
+
+    selStartIx = switch
+                   when selStartIx <= rangeStartIx then selStartIx
+                   when selStartIx < rangeEndIx    then rangeStartIx
+                   else selStartIx - rangeLength
+    selEndIx   = switch
+                   when selEndIx <= rangeStartIx then selEndIx
+                   when selEndIx < rangeEndIx    then rangeStartIx
+                   else selEndIx - rangeLength
     @setTextInRange range, ''
     @$textArea.get(0).selectionStart = selStartIx
-    @$textArea.get(0).selectionEnd = selEndIx
+    @$textArea.get(0).selectionEnd   = selEndIx
 
   setTextInRange: (range, text) ->
     range = Range.fromObj range
     rangeStartIx = @characterIndexForPosition range.start
-    rangeEndIx = @characterIndexForPosition range.end
+    rangeEndIx   = @characterIndexForPosition range.end
     bufferText = @$textArea.val()
     @setText (bufferText.slice 0, rangeStartIx) + text + (bufferText.slice rangeEndIx, bufferText.length)
 
@@ -117,6 +121,7 @@ module.exports = atom =
 
   notifications:
     hideTimer: null
+
     addNotification: (msg, bgColor, duration) ->
       $notification = $('#atom-Emulator .notification')
       $notification.text msg
@@ -125,76 +130,76 @@ module.exports = atom =
       $notification.fadeIn 50
       if @hideTimer
         clearTimeout @hideTimer
-      @hideTimer = setTimeout((->
+
+      @hideTimer = setTimeout ( ->
         $notification.fadeOut 100
-        return
-      ), duration)
-      return
+      ), duration
+
     addInfo: (msg) ->
       @addNotification msg, '9ed2ff', 3000
-      return
     addSuccess: (msg) ->
       @addNotification msg, '99dba6', 3000
-      return
     addWarning: (msg) ->
       @addNotification msg, 'e8d0a1', 3000
-      return
     addError: (msg) ->
       @addNotification msg, 'ecb1b1', 4000
-      return
+
   clipboard:
     clipboard:
       text: null
       meta: null
+
     readWithMetadata: ->
       @clipboard
+
     write: (text, metadata) ->
       @clipboard =
         text: text
         metadata: if metadata then metadata else null
-      return
+
   workspace:
     getActiveTextEditor: ->
       @editor
+
     editor:
-      getGrammar: ->
-        @grammar
       grammar:
         tokenizeLine: ->
-          {
-            tags: []
-            ruleStack: []
-          }
+          { tags: [], ruleStack: [] }
         registry: idsByScope: {}
+
+      getGrammar: ->
+        @grammar
+
+      buffer: new Buffer
+
+
       getBuffer: ->
         @buffer
       setCursorBufferPosition: (pos) ->
-        @setSelectedBufferRange [
-          pos
-          pos
-        ]
-        return
+        @setSelectedBufferRange [pos, pos]
+
       getSelectedBufferRange: ->
         @buffer.getSelectionRange()
+
       setSelectedBufferRange: (range) ->
         @buffer.setSelectionRange range
-        return
+
       getText: ->
         @buffer.getText()
+
       setText: (txt) ->
         @buffer.setText txt
-        return
-      buffer: new Buffer
+
   init: ($atomEmulator) ->
-    $textArea = $atomEmulator.find('textarea')
+    $textArea = $atomEmulator.find 'textarea'
     atom.workspace.editor.buffer.$textArea = $textArea
     $textArea.attr 'spellcheck', false
-    $textArea.keydown @keyHandler.bind(this)
-    setTimeout (->
+    $textArea.keydown @keyHandler.bind this
+    setTimeout ( ->
       atom.notifications.addSuccess 'Atom emulator initialized'
     ), 300
     # Small delay to see it appear after page has loaded
-    return
+
   keyHandler: (event) ->
     # console.log(event.charCode);
     # console.log(event.keyCode);
@@ -217,22 +222,20 @@ module.exports = atom =
           @listPaste()
         else
           return true
-      return false
-    return
+      return false # disable event propagation after execution of list-edit command
+
   listSelect: ->
     console.log 'list-select'
     ListEdit.selectCmd()
-    return
+
   listCut: ->
     console.log 'list-cut'
     ListEdit.cutCmd()
-    return
+
   listCopy: ->
     console.log 'list-copy'
     ListEdit.copyCmd()
-    return
+
   listPaste: ->
     console.log 'list-paste'
     ListEdit.pasteCmd()
-    return
-###
