@@ -4,6 +4,7 @@ TextManipulation = require './text-manipulation'
 
 
 module.exports =
+module.exports = ListEdit =
   subscriptions: null
 
   activate: (state) ->
