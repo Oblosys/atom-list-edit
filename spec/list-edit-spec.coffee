@@ -138,6 +138,34 @@ describe 'ListEdit', ->
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '[   Clyde   ]'
 
+  describe 'separator defaulting', ->
+    beforeEach ->
+      spyOn(atom.notifications, 'addWarning')
+
+    it 'warns when a default separator is used', ->
+      listCopyFrom '[NoSep]', 0, 3
+      editor.setText '{NoSepEither}'
+      editor.setCursorBufferPosition [0, 1]
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '{NoSep; NoSepEither}'
+      expect(atom.notifications.addWarning).toHaveBeenCalledWith('Separator unknown, using default: \';\'');
+
+    it 'does not warn when a default separator isn\'t used because target range wasn\'t empty', ->
+      listCopyFrom '[NoSep]', 0, 3
+      editor.setText '{one, two, three}'
+      editor.setCursorBufferPosition [0, 7] # paste on two
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '{one, NoSep, three}'
+      expect(atom.notifications.addWarning).not.toHaveBeenCalled();
+
+    it 'does not warn when a default separator isn\'t used because target list was empty', ->
+      listCopyFrom '[NoSep]', 0, 3
+      editor.setText '{}'
+      editor.setCursorBufferPosition [0, 1] # paste in empty list
+      atom.commands.dispatch editorView, 'list-edit:paste'
+      expect(editor.getText()).toBe '{NoSep}'
+      expect(atom.notifications.addWarning).not.toHaveBeenCalled();
+
 describe 'ListEdit on a file with a JavaScript grammar', ->
   [editor, editorView] = []
   beforeEach ->
