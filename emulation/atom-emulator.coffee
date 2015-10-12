@@ -1,256 +1,238 @@
-var Buffer = function() {
-  this.$textArea = null;
-}
-Buffer.prototype.setText = function(txt) {
-  return this.$textArea.val(txt);
-};
+class Range
+  start: null
+  end: null
 
-Buffer.prototype.getText = function() {
-  return this.$textArea.val();
-};
-Buffer.prototype.getSelectionRange = function() {
-  return new atom.Range( this.positionForCharacterIndex( this.$textArea.get(0).selectionStart )
-                       , this.positionForCharacterIndex( this.$textArea.get(0).selectionEnd )
-                       )
-};
+  constructor: (start, end) ->
+    @start = start
+    @end = end
 
-Buffer.prototype.setSelectionRange = function(range) {
-  range = Range.fromObj(range);
-  this.$textArea.get(0).selectionStart = this.characterIndexForPosition( range.start );
-  this.$textArea.get(0).selectionEnd = this.characterIndexForPosition( range.end );
-};
+# Not in prototype, because fromObj is a static method
+Range.fromObj = (obj) ->
+  if obj instanceof this
+    return obj
+  else if Array.isArray(obj)
+    return new (atom.Range)(obj[0], obj[1])
+  else
+    console.error 'rangeFromObj parameter is Range nor Array: '
+    console.dir obj
 
-Buffer.prototype.delete = function(range) {
-  range = Range.fromObj(range);
-  const rangeStartIx = this.characterIndexForPosition( range.start );
-  const rangeEndIx = this.characterIndexForPosition( range.end );
-  const rangeLength = rangeEndIx - rangeStartIx;
-  var selStartIx = this.$textArea.get(0).selectionStart;
-  var selEndIx = this.$textArea.get(0).selectionEnd;
-  selStartIx = selStartIx <= rangeStartIx ? selStartIx
-                                          : selStartIx < rangeEndIx ? rangeStartIx : selStartIx - rangeLength
-  selEndIx = selEndIx <= rangeStartIx ? selEndIx
-                                      : selEndIx < rangeEndIx ? rangeStartIx : selEndIx - rangeLength
+class Point
+  row: null
+  column: null
 
-  this.setTextInRange(range, '');
-  this.$textArea.get(0).selectionStart = selStartIx
-  this.$textArea.get(0).selectionEnd = selEndIx
-};
+  constructor: (row, column) ->
+    @row = row
+    @column = column
 
-Buffer.prototype.setTextInRange = function(range, text) {
-  range = Range.fromObj(range);
-  const rangeStartIx = this.characterIndexForPosition( range.start );
-  const rangeEndIx = this.characterIndexForPosition( range.end );
-  const bufferText = this.$textArea.val();
-  this.setText(bufferText.slice(0,rangeStartIx)+text+bufferText.slice(rangeEndIx,bufferText.length));
-};
+# Not in prototype, because fromObj is a static method
+Point.fromObj = (obj) ->
+  if obj instanceof atom.Point
+    return obj
+  else if Array.isArray(obj)
+    return new (atom.Point)(obj[0], obj[1])
+  else
+    console.error 'fromObj parameter is Point nor Array: '
+    console.dir obj
 
-Buffer.prototype.positionForCharacterIndex = function(ix) {
-  const bufferText = this.$textArea.val();
-  var row = 0;
-  var col = 0;
-  for (var i=0; i<ix; i++) {
-    if (bufferText[i]==='\n') {
-      row++;
-      col = 0;
-    } else {
-      col++;
-    }
-  }
-  return new atom.Point(row,col);
-};
+class Buffer
+  $textArea = null
+  constructor: ($textArea) ->
+    @$textArea = $textArea
 
-// Note: does note handle column position past line end (returned ix is on following lines)
-Buffer.prototype.characterIndexForPosition = function(pos) {
-  pos = Point.fromObj(pos)
-  const bufferText = this.$textArea.val();
-  var ix = 0;
-  const row = pos.row;
-  const col = pos.column;
-  for (var r=0; r<row; r++) {
-    const nextNewline = bufferText.indexOf('\n', ix);
-    if (nextNewline < 0) {
-      return bufferText.length;
-    } else {
-      ix = nextNewline+1;
-    }
-  }
-  return Math.min(ix+col, bufferText.length);
-}
+  setText: (txt) ->
+    @$textArea.val(txt)
 
-var Range = function(start, end) {
-  this.start = start;
-  this.end = end;
-}
+  getText: ->
+    @$textArea.val();
 
-// Not in prototype, because fromObj is a static method
-Range.fromObj = function(obj) {
-  if (obj instanceof this) {
-    return obj;
-  } else if (Array.isArray(obj)) {
-    return new atom.Range( obj[0], obj[1] );
-  } else {
-   console.error('rangeFromObj parameter is Range nor Array: ');
-   console.dir(obj);
-  }
-}
+  getSelectionRange: ->
+      new Range( @positionForCharacterIndex(@$textArea.get(0).selectionStart)
+               , @positionForCharacterIndex(@$textArea.get(0).selectionEnd)
+               )
 
-var Point = function(row, column) {
-  this.row = row;
-  this.column = column;
-};
-Point.fromObj = function(obj) {
-  if (obj instanceof atom.Point) {
-    return obj;
-  } else if (Array.isArray(obj)) {
-    return new atom.Point( obj[0], obj[1] );
-  } else {
-   console.error('fromObj parameter is Point nor Array: ');
-   console.dir(obj);
-  }
-}
+  setSelectionRange: (range) ->
+    range = Range.fromObj(range)
+    @$textArea.get(0).selectionStart = @characterIndexForPosition range.start
+    @$textArea.get(0).selectionEnd = @characterIndexForPosition range.end
 
-atom = {
-  Range: Range,
-  Point: Point,
+  delete: (range) ->
+    range = Range.fromObj range
+    rangeStartIx = @characterIndexForPosition range.start
+    rangeEndIx = @characterIndexForPosition range.end
+    rangeLength = rangeEndIx - rangeStartIx
+    selStartIx = @$textArea.get(0).selectionStart
+    selEndIx = @$textArea.get(0).selectionEnd
+    # TODO: fix layout
+    selStartIx = if selStartIx <= rangeStartIx then selStartIx else
+                                                    if selStartIx < rangeEndIx then rangeStartIx else
+                                                                                    selStartIx - rangeLength
+    selEndIx = if selEndIx <= rangeStartIx then selEndIx else if selEndIx < rangeEndIx then rangeStartIx else selEndIx - rangeLength
+    @setTextInRange range, ''
+    @$textArea.get(0).selectionStart = selStartIx
+    @$textArea.get(0).selectionEnd = selEndIx
 
-  notifications: {
-    hideTimer: null,
-    addNotification: function(msg, bgColor, duration) {
-      $notification = $("#atom-Emulator .notification");
-      $notification.text(msg);
-      $notification.css('background-color', bgColor);
-      $notification.hide();
-      $notification.fadeIn(50);
-      if (this.hideTimer)
-        clearTimeout(this.hideTimer);
-      this.hideTimer = setTimeout(function() {
-        $notification.fadeOut(100);
-      }, duration);
-    },
-    addInfo: function(msg) {
-      this.addNotification(msg, '9ed2ff', 3000);
-    },
-    addSuccess: function(msg) {
-      this.addNotification(msg, '99dba6', 3000);
-    },
-    addWarning: function(msg) {
-      this.addNotification(msg, 'e8d0a1', 3000);
-    },
-    addError: function(msg) {
-      this.addNotification(msg, 'ecb1b1', 4000);
-    }
-  },
-  clipboard: {
-    clipboard: {text: null, meta: null},
+  setTextInRange: (range, text) ->
+    range = Range.fromObj range
+    rangeStartIx = @characterIndexForPosition range.start
+    rangeEndIx = @characterIndexForPosition range.end
+    bufferText = @$textArea.val()
+    @setText (bufferText.slice 0, rangeStartIx) + text + (bufferText.slice rangeEndIx, bufferText.length)
 
-    readWithMetadata: function() {
-      return this.clipboard;
-    },
-    write: function(text, metadata) {
-      this.clipboard = {text: text, metadata: metadata ? metadata : null};
-    }
-  },
+  positionForCharacterIndex: (ix) ->
+    bufferText = @$textArea.val()
+    row = 0
+    col = 0
+    i = 0
+    while i < ix
+      if bufferText[i] == '\n'
+        row++
+        col = 0
+      else
+        col++
+      i++
+    new Point(row, col)
 
-  workspace: {
-    getActiveTextEditor: function()  {
-      return this.editor;
-    },
+  # Note: does note handle column position past line end (returned ix is on following lines)
+  characterIndexForPosition: (pos) ->
+    pos = Point.fromObj(pos)
+    bufferText = @$textArea.val()
+    ix = 0
+    row = pos.row
+    col = pos.column
+    r = 0
+    while r < row
+      nextNewline = bufferText.indexOf '\n', ix
+      if nextNewline < 0
+        return bufferText.length
+      else
+        ix = nextNewline + 1
+      r++
+    Math.min ix + col, bufferText.length
 
-    editor: {
-      getGrammar: function() {
-        return this.grammar;
-      },
-      grammar: {
-        tokenizeLine: function() {
-          return {tags: [], ruleStack: []}
-        },
 
-        registry: {
-          idsByScope: {}
-        }
-      },
+module.exports = atom =
+  Range: Range
+  Point: Point
+  Buffer: Buffer
 
-      getBuffer: function() {
-        return this.buffer;
-      },
-      setCursorBufferPosition: function(pos) {
-        this.setSelectedBufferRange([pos,pos])
-      },
-      getSelectedBufferRange: function() {
-        return this.buffer.getSelectionRange();
-      },
-      setSelectedBufferRange: function(range) {
-        this.buffer.setSelectionRange(range);
-      },
-      getText: function() {
-        return this.buffer.getText();
-      },
-      setText: function(txt) {
-        this.buffer.setText(txt);
-      },
-      buffer: new Buffer()
-    }
-  },
-
-  init: function($atomEmulator) {
-    var $textArea = $atomEmulator.find('textarea');
-    atom.workspace.editor.buffer.$textArea = $textArea;
-    $textArea.attr('spellcheck', false);
-    $textArea.keydown((this.keyHandler).bind(this));
-    setTimeout(function () {
-      atom.notifications.addSuccess('Atom emulator initialized')
-    }, 300); // Small delay to see it appear after page has loaded
-  },
-
-  keyHandler: function(event) {
-    // console.log(event.charCode);
-    // console.log(event.keyCode);
-    // console.log(event.altKey);
-    // console.log(event.metaKey);
-    // console.log(event.ctrlKey);
-    if (event.ctrlKey && event.charCode == 115) { // CTRL-S, just for testing
-      this.listSelect();
+  notifications:
+    hideTimer: null
+    addNotification: (msg, bgColor, duration) ->
+      $notification = $('#atom-Emulator .notification')
+      $notification.text msg
+      $notification.css 'background-color', bgColor
+      $notification.hide()
+      $notification.fadeIn 50
+      if @hideTimer
+        clearTimeout @hideTimer
+      @hideTimer = setTimeout((->
+        $notification.fadeOut 100
+        return
+      ), duration)
+      return
+    addInfo: (msg) ->
+      @addNotification msg, '9ed2ff', 3000
+      return
+    addSuccess: (msg) ->
+      @addNotification msg, '99dba6', 3000
+      return
+    addWarning: (msg) ->
+      @addNotification msg, 'e8d0a1', 3000
+      return
+    addError: (msg) ->
+      @addNotification msg, 'ecb1b1', 4000
+      return
+  clipboard:
+    clipboard:
+      text: null
+      meta: null
+    readWithMetadata: ->
+      @clipboard
+    write: (text, metadata) ->
+      @clipboard =
+        text: text
+        metadata: if metadata then metadata else null
+      return
+  workspace:
+    getActiveTextEditor: ->
+      @editor
+    editor:
+      getGrammar: ->
+        @grammar
+      grammar:
+        tokenizeLine: ->
+          {
+            tags: []
+            ruleStack: []
+          }
+        registry: idsByScope: {}
+      getBuffer: ->
+        @buffer
+      setCursorBufferPosition: (pos) ->
+        @setSelectedBufferRange [
+          pos
+          pos
+        ]
+        return
+      getSelectedBufferRange: ->
+        @buffer.getSelectionRange()
+      setSelectedBufferRange: (range) ->
+        @buffer.setSelectionRange range
+        return
+      getText: ->
+        @buffer.getText()
+      setText: (txt) ->
+        @buffer.setText txt
+        return
+      buffer: new Buffer
+  init: ($atomEmulator) ->
+    $textArea = $atomEmulator.find('textarea')
+    atom.workspace.editor.buffer.$textArea = $textArea
+    $textArea.attr 'spellcheck', false
+    $textArea.keydown @keyHandler.bind(this)
+    setTimeout (->
+      atom.notifications.addSuccess 'Atom emulator initialized'
+    ), 300
+    # Small delay to see it appear after page has loaded
+    return
+  keyHandler: (event) ->
+    # console.log(event.charCode);
+    # console.log(event.keyCode);
+    # console.log(event.altKey);
+    # console.log(event.metaKey);
+    # console.log(event.ctrlKey);
+    if event.ctrlKey and event.charCode == 115
+      # CTRL-S, just for testing
+      @listSelect()
       return false
-    }
-    if (event.altKey && !event.shiftKey &&
-        (event.metaKey && !event.ctrlKey) || (event.ctrlKey && !event.metaKey) ) {
-      switch (event.keyCode) {
-        case 83:
-          this.listSelect();
-          break;
-        case 88:
-          this.listCut();
-          break;
-        case 67:
-          this.listCopy();
-          break;
-        case 86:
-          this.listPaste();
-        default:
-          return true;
-      }
-      return false;
-    }
-  },
-
-  listSelect: function() {
-    console.log('list-select');
-    ListEdit.selectCmd();
-  },
-
-  listCut: function() {
-    console.log('list-cut');
-    ListEdit.cutCmd();
-  },
-
-  listCopy: function() {
-    console.log('list-copy');
-    ListEdit.copyCmd();
-  },
-
-  listPaste: function() {
-    console.log('list-paste');
-    ListEdit.pasteCmd();
-  }
-}
+    if event.altKey and !event.shiftKey and event.metaKey and !event.ctrlKey or event.ctrlKey and !event.metaKey
+      switch event.keyCode
+        when 83
+          @listSelect()
+        when 88
+          @listCut()
+        when 67
+          @listCopy()
+        when 86
+          @listPaste()
+        else
+          return true
+      return false
+    return
+  listSelect: ->
+    console.log 'list-select'
+    ListEdit.selectCmd()
+    return
+  listCut: ->
+    console.log 'list-cut'
+    ListEdit.cutCmd()
+    return
+  listCopy: ->
+    console.log 'list-copy'
+    ListEdit.copyCmd()
+    return
+  listPaste: ->
+    console.log 'list-paste'
+    ListEdit.pasteCmd()
+    return
+###
