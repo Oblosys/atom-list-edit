@@ -1,25 +1,91 @@
-$(function () {
-  atom.init($('#atom-simulator'));
-});
+var Buffer = function() {
+  this.$textArea = null;
+}
+Buffer.prototype.setText = function(txt) {
+  return this.$textArea.val(txt);
+};
 
-// Very hacky require, tailored to the exact paths that are required by list-edit and dependencies
-function require(name) {
-  switch (name) {
-    case 'atom':
-      return window.atom;
-    case 'underscore-plus':
-      return window._;
-    case './text-manipulation':
-      return window.TextManipulation;
-    default:
-      console.error('Unkown module: '+name)
-      return {};
+Buffer.prototype.getText = function() {
+  return this.$textArea.val();
+};
+Buffer.prototype.getSelectionRange = function() {
+  return new atom.Range( this.positionForCharacterIndex( this.$textArea.get(0).selectionStart )
+                       , this.positionForCharacterIndex( this.$textArea.get(0).selectionEnd )
+                       )
+};
+
+Buffer.prototype.setSelectionRange = function(range) {
+  range = Range.fromObj(range);
+  this.$textArea.get(0).selectionStart = this.characterIndexForPosition( range.start );
+  this.$textArea.get(0).selectionEnd = this.characterIndexForPosition( range.end );
+};
+
+Buffer.prototype.delete = function(range) {
+  range = Range.fromObj(range);
+  const rangeStartIx = this.characterIndexForPosition( range.start );
+  const rangeEndIx = this.characterIndexForPosition( range.end );
+  const rangeLength = rangeEndIx - rangeStartIx;
+  var selStartIx = this.$textArea.get(0).selectionStart;
+  var selEndIx = this.$textArea.get(0).selectionEnd;
+  selStartIx = selStartIx <= rangeStartIx ? selStartIx
+                                          : selStartIx < rangeEndIx ? rangeStartIx : selStartIx - rangeLength
+  selEndIx = selEndIx <= rangeStartIx ? selEndIx
+                                      : selEndIx < rangeEndIx ? rangeStartIx : selEndIx - rangeLength
+
+  this.setTextInRange(range, '');
+  this.$textArea.get(0).selectionStart = selStartIx
+  this.$textArea.get(0).selectionEnd = selEndIx
+};
+
+Buffer.prototype.setTextInRange = function(range, text) {
+  range = Range.fromObj(range);
+  const rangeStartIx = this.characterIndexForPosition( range.start );
+  const rangeEndIx = this.characterIndexForPosition( range.end );
+  const bufferText = this.$textArea.val();
+  this.setText(bufferText.slice(0,rangeStartIx)+text+bufferText.slice(rangeEndIx,bufferText.length));
+};
+
+Buffer.prototype.positionForCharacterIndex = function(ix) {
+  const bufferText = this.$textArea.val();
+  var row = 0;
+  var col = 0;
+  for (var i=0; i<ix; i++) {
+    if (bufferText[i]==='\n') {
+      row++;
+      col = 0;
+    } else {
+      col++;
+    }
   }
+  return new atom.Point(row,col);
+};
+
+// Note: does note handle column position past line end (returned ix is on following lines)
+Buffer.prototype.characterIndexForPosition = function(pos) {
+  pos = Point.fromObj(pos)
+  const bufferText = this.$textArea.val();
+  var ix = 0;
+  const row = pos.row;
+  const col = pos.column;
+  for (var r=0; r<row; r++) {
+    const nextNewline = bufferText.indexOf('\n', ix);
+    if (nextNewline < 0) {
+      return bufferText.length;
+    } else {
+      ix = nextNewline+1;
+    }
+  }
+  return Math.min(ix+col, bufferText.length);
 }
 
+var Range = function(start, end) {
+  this.start = start;
+  this.end = end;
+}
 
-rangeFromObj = function(obj) {
-  if (obj instanceof atom.Range) {
+// Not in prototype, because fromObj is a static method
+Range.fromObj = function(obj) {
+  if (obj instanceof this) {
     return obj;
   } else if (Array.isArray(obj)) {
     return new atom.Range( obj[0], obj[1] );
@@ -29,33 +95,29 @@ rangeFromObj = function(obj) {
   }
 }
 
-
-pointFromObj = function(obj) {
+var Point = function(row, column) {
+  this.row = row;
+  this.column = column;
+};
+Point.fromObj = function(obj) {
   if (obj instanceof atom.Point) {
     return obj;
   } else if (Array.isArray(obj)) {
     return new atom.Point( obj[0], obj[1] );
   } else {
-   console.error('pointFromObj parameter is Point nor Array: ');
+   console.error('fromObj parameter is Point nor Array: ');
    console.dir(obj);
   }
 }
 
-window.atom = {
-  Range: function(start, end) {
-    this.start = start;
-    this.end = end;
-  },
-
-  Point: function(row, column) {
-    this.row = row;
-    this.column = column;
-  },
+atom = {
+  Range: Range,
+  Point: Point,
 
   notifications: {
     hideTimer: null,
     addNotification: function(msg, bgColor, duration) {
-      $notification = $("#atom-simulator .notification");
+      $notification = $("#atom-Emulator .notification");
       $notification.text(msg);
       $notification.css('background-color', bgColor);
       $notification.hide();
@@ -65,6 +127,12 @@ window.atom = {
       this.hideTimer = setTimeout(function() {
         $notification.fadeOut(100);
       }, duration);
+    },
+    addInfo: function(msg) {
+      this.addNotification(msg, '9ed2ff', 3000);
+    },
+    addSuccess: function(msg) {
+      this.addNotification(msg, '99dba6', 3000);
     },
     addWarning: function(msg) {
       this.addNotification(msg, 'e8d0a1', 3000);
@@ -115,90 +183,24 @@ window.atom = {
       setSelectedBufferRange: function(range) {
         this.buffer.setSelectionRange(range);
       },
-
-      buffer: {
-        $textArea: null,
-
-        getText: function() {
-          return this.$textArea.val();
-        },
-        setText: function(txt) {
-          return this.$textArea.val(txt);
-        },
-        getSelectionRange: function() {
-          return new atom.Range( this.positionForCharacterIndex( this.$textArea.get(0).selectionStart )
-                               , this.positionForCharacterIndex( this.$textArea.get(0).selectionEnd )
-                               )
-        },
-        setSelectionRange: function(range) {
-          range = rangeFromObj(range);
-          this.$textArea.get(0).selectionStart = this.characterIndexForPosition( range.start );
-          this.$textArea.get(0).selectionEnd = this.characterIndexForPosition( range.end );
-        },
-        delete: function(range) {
-          range = rangeFromObj(range);
-          const rangeStartIx = this.characterIndexForPosition( range.start );
-          const rangeEndIx = this.characterIndexForPosition( range.end );
-          const rangeLength = rangeEndIx - rangeStartIx;
-          var selStartIx = this.$textArea.get(0).selectionStart;
-          var selEndIx = this.$textArea.get(0).selectionEnd;
-          selStartIx = selStartIx <= rangeStartIx ? selStartIx
-                                                  : selStartIx < rangeEndIx ? rangeStartIx : selStartIx - rangeLength
-          selEndIx = selEndIx <= rangeStartIx ? selEndIx
-                                              : selEndIx < rangeEndIx ? rangeStartIx : selEndIx - rangeLength
-
-          this.setTextInRange(range, '');
-          this.$textArea.get(0).selectionStart = selStartIx
-          this.$textArea.get(0).selectionEnd = selEndIx
-        },
-        setTextInRange: function(range, text) {
-          range = rangeFromObj(range);
-          const rangeStartIx = this.characterIndexForPosition( range.start );
-          const rangeEndIx = this.characterIndexForPosition( range.end );
-          const bufferText = this.$textArea.val();
-          this.setText(bufferText.slice(0,rangeStartIx)+text+bufferText.slice(rangeEndIx,bufferText.length));
-        },
-        positionForCharacterIndex: function(ix) {
-          const bufferText = this.$textArea.val();
-          var row = 0;
-          var col = 0;
-          for (i=0; i<ix; i++) {
-            if (bufferText[i]=='\n') {
-              row++;
-              col = 0;
-            } else {
-              col++;
-            }
-          }
-          return new atom.Point(row,col);
-        },
-        // Note: does note handle column position past line end (returned ix is on following lines)
-        characterIndexForPosition: function(pos) {
-          pos = pointFromObj(pos)
-          const bufferText = this.$textArea.val();
-          var ix = 0;
-          const row = pos.row;
-          const col = pos.column;
-          for (r=0; r<row; r++) {
-            nextNewline = bufferText.indexOf('\n', ix);
-            if (nextNewline < 0) {
-              return bufferText.length;
-            } else {
-              ix = nextNewline+1;
-            }
-          }
-          return Math.min(ix+col, bufferText.length);
-        }
-      }
+      getText: function() {
+        return this.buffer.getText();
+      },
+      setText: function(txt) {
+        this.buffer.setText(txt);
+      },
+      buffer: new Buffer()
     }
   },
 
-  init: function($atomSimulator) {
-    $textArea = $atomSimulator.find('textarea');
-    this.workspace.editor.buffer.$textArea = $textArea;
+  init: function($atomEmulator) {
+    var $textArea = $atomEmulator.find('textarea');
+    atom.workspace.editor.buffer.$textArea = $textArea;
     $textArea.attr('spellcheck', false);
     $textArea.keydown((this.keyHandler).bind(this));
-    //ListEdit.test();
+    setTimeout(function () {
+      atom.notifications.addSuccess('Atom emulator initialized')
+    }, 300); // Small delay to see it appear after page has loaded
   },
 
   keyHandler: function(event) {
