@@ -21,6 +21,15 @@
   ]
 'menu': [
   {
+    'label': 'Selection'
+    'submenu': [
+      {
+        'label': 'Select List Element'
+        'command': 'list-edit:select'
+      }
+    ]
+  }
+  {
     'label': 'Packages'
     'submenu': [
       'label': 'List Edit'
