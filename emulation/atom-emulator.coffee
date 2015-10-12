@@ -66,11 +66,11 @@ class Buffer
     selStartIx = switch
                    when selStartIx <= rangeStartIx then selStartIx
                    when selStartIx < rangeEndIx    then rangeStartIx
-                   else selStartIx - rangeLength
+                   else                                 selStartIx - rangeLength
     selEndIx   = switch
                    when selEndIx <= rangeStartIx then selEndIx
                    when selEndIx < rangeEndIx    then rangeStartIx
-                   else selEndIx - rangeLength
+                   else                               selEndIx - rangeLength
     @setTextInRange range, ''
     @$textArea.get(0).selectionStart = selStartIx
     @$textArea.get(0).selectionEnd   = selEndIx
@@ -197,45 +197,28 @@ module.exports = atom =
     $textArea.keydown @keyHandler.bind this
     setTimeout ( ->
       atom.notifications.addSuccess 'Atom emulator initialized'
-    ), 300
-    # Small delay to see it appear after page has loaded
+    ), 300 # Small delay to see it appear after page has loaded
 
   keyHandler: (event) ->
-    # console.log(event.charCode);
-    # console.log(event.keyCode);
-    # console.log(event.altKey);
-    # console.log(event.metaKey);
-    # console.log(event.ctrlKey);
-    if event.ctrlKey and event.charCode == 115
-      # CTRL-S, just for testing
-      @listSelect()
-      return false
     if event.altKey and !event.shiftKey and event.metaKey and !event.ctrlKey or event.ctrlKey and !event.metaKey
       switch event.keyCode
         when 83
-          @listSelect()
+          atom.commands.dispatch(null, 'list-edit:select')
         when 88
-          @listCut()
+          atom.commands.dispatch(null, 'list-edit:cut')
         when 67
-          @listCopy()
+          atom.commands.dispatch(null, 'list-edit:copy')
         when 86
-          @listPaste()
+          atom.commands.dispatch(null, 'list-edit:paste')
         else
           return true
       return false # disable event propagation after execution of list-edit command
 
-  listSelect: ->
-    console.log 'list-select'
-    ListEdit.selectCmd()
-
-  listCut: ->
-    console.log 'list-cut'
-    ListEdit.cutCmd()
-
-  listCopy: ->
-    console.log 'list-copy'
-    ListEdit.copyCmd()
-
-  listPaste: ->
-    console.log 'list-paste'
-    ListEdit.pasteCmd()
+  commands:
+    dispatch: (editorView, cmd) -> # editorView is ignored
+      switch cmd
+        when 'list-edit:select' then ListEdit.selectCmd()
+        when 'list-edit:cut'    then ListEdit.cutCmd()
+        when 'list-edit:copy'   then ListEdit.copyCmd()
+        when 'list-edit:paste'  then ListEdit.pasteCmd()
+        else                         console.error 'Unknown command: ' + cmd
