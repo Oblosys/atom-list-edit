@@ -159,7 +159,29 @@ module.exports = atom =
         text: text
         metadata: if metadata then metadata else null
 
+  # Stub for Jasmine testing with actual list-edit-spec.coffee
+  views:
+    getView: ->
+      null
+
+  # Stub for Jasmine testing with actual list-edit-spec.coffee
+  packages:
+    # NOTE: Does not return a promise but immediately initializes the emulator, since we don't need any asynchronous calls.
+    #       See atom.workspace.open.
+    activatePackage: ->
+      atom.init jQuery('#atom-emulator')
+      null
+
   workspace:
+    # Stub for Jasmine testing with actual list-edit-spec.coffee
+    open: ->
+      then: (promiseCallback) ->
+        # NOTE: promiseCallback is not a promise, but simply a callback that is executed immediately.
+        #       Use open.then only with atom.packages.activatePackage.
+        #       Having full promises here complicates the dummy implementation of waitsForPromise(), since
+        #       Atom uses Jasmine 1.3 which is not in npm, and asynchronous testing has changed drastically in Jasmine 2.x.
+        promiseCallback()
+
     getActiveTextEditor: ->
       @editor
 
