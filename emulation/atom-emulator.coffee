@@ -1,3 +1,5 @@
+jQuery = require 'jquery'
+
 class Range
   start: null
   end: null
@@ -123,7 +125,7 @@ module.exports = atom =
     hideTimer: null
 
     addNotification: (msg, bgColor, duration) ->
-      $notification = $('#atom-Emulator .notification')
+      $notification = jQuery('#atom-emulator .notification')
       $notification.text msg
       $notification.css 'background-color', bgColor
       $notification.hide()
