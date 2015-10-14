@@ -2,37 +2,8 @@ _ = require 'underscore-plus'
 TextManipulation = require '../lib/text-manipulation'
 
 describe 'TextManipulation', ->
-  sourceFragment = 'Data 1 2 3'
-  leadingWhitespace = ' ' #'\n\n\t '
-  trailingWhitespace = ' ' #'\n\n\t '
-  describe 'stripLeadingWhitespace', ->
-    it 'strips leading whitespace', ->
-    expect(TextManipulation.stripLeadingWhitespace (leadingWhitespace+sourceFragment+trailingWhitespace))
-      .toBe(sourceFragment+trailingWhitespace)
-
-    it 'is identity when there is no leading whitespace', ->
-    expect(TextManipulation.stripLeadingWhitespace (sourceFragment+trailingWhitespace))
-      .toBe(sourceFragment+trailingWhitespace)
-
-    it 'handles whitespace-only string', ->
-    expect(TextManipulation.stripLeadingWhitespace (leadingWhitespace+trailingWhitespace))
-      .toBe('')
-
-  describe 'stripTrailingWhitespace', ->
-    it 'strips trailing whitespace', ->
-    expect(TextManipulation.stripTrailingWhitespace (leadingWhitespace+sourceFragment+trailingWhitespace))
-      .toBe(leadingWhitespace+sourceFragment)
-
-    it 'is identity when there is no trailing whitespace', ->
-    expect(TextManipulation.stripTrailingWhitespace (leadingWhitespace+sourceFragment))
-      .toBe(leadingWhitespace+sourceFragment)
-
-    it 'handles whitespace-only string', ->
-    expect(TextManipulation.stripTrailingWhitespace (leadingWhitespace+trailingWhitespace))
-      .toBe('')
-
   describe 'findMatchingClosingBracket', ->
-    #             01234567890123
+    #             012345678901234
     bufferText = '[1,[[],2,3],4]'
     it 'handles index at start of list contents', ->
       expect(TextManipulation.findMatchingClosingBracket bufferText, [], 1, false)

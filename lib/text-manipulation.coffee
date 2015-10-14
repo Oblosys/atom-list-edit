@@ -307,9 +307,3 @@ module.exports = TextManipulation =
 
   getTrailingWhitespace: (text) ->
     (/\s*$/.exec(text) ? [''])[0]
-
-  stripLeadingWhitespace: (text) ->
-    text.replace(/^\s+/, '')
-
-  stripTrailingWhitespace: (text) ->
-    text.replace(/\s+$/, '')
