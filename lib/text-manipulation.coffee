@@ -24,8 +24,8 @@ class ListElement
 
   # TODO: Override toString? Could be confusing.
   show: ->
-    'ListElement: <' + @start + ' - ' + @end + '> ' +
-      'stripped: <' + @eltStart + ' - ' + @eltEnd + '> : ' +
+    'ListElement: [' + @start + ' - ' + @end + '> ' +
+      'stripped: [' + @eltStart + ' - ' + @eltEnd + '> : ' +
       '"' + (if @strippedElement.length <= 8 then @strippedElement else
                 (@strippedElement.slice 0, 3) + '..' + (@strippedElement.slice -3)) + '"'
 
