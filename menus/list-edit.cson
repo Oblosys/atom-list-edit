@@ -2,22 +2,25 @@
 # TODO: Do we really want these in the context menu? Might be too much clutter.
 'context-menu':
   'atom-text-editor': [
-    {
-      'label': 'Select List Element'
-      'command': 'list-edit:select'
-    }
-    {
-      'label': 'Cut List Element'
-      'command': 'list-edit:cut'
-    }
-    {
-      'label': 'Copy List Element'
-      'command': 'list-edit:copy'
-    }
-    {
-      'label': 'Paste List Element'
-      'command': 'list-edit:paste'
-    }
+    label: 'List edit'
+    submenu: [
+      {
+        'label': 'Select'
+        'command': 'list-edit:select'
+      }
+      {
+        'label': 'Cut'
+        'command': 'list-edit:cut'
+      }
+      {
+        'label': 'Copy'
+        'command': 'list-edit:copy'
+      }
+      {
+        'label': 'Paste'
+        'command': 'list-edit:paste'
+      }
+    ]
   ]
 'menu': [
   {
@@ -35,19 +38,19 @@
       'label': 'List Edit'
       'submenu': [
         {
-          'label': 'Select List Element'
+          'label': 'List Select'
           'command': 'list-edit:select'
         }
         {
-          'label': 'Cut List Element'
+          'label': 'List Cut'
           'command': 'list-edit:cut'
         }
         {
-          'label': 'Copy List Element'
+          'label': 'List Copy'
           'command': 'list-edit:copy'
         }
         {
-          'label': 'Paste List Element'
+          'label': 'List Paste'
           'command': 'list-edit:paste'
         }
       ]
