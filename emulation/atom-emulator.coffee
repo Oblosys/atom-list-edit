@@ -138,13 +138,13 @@ module.exports = atom =
       ), duration
 
     addInfo: (msg) ->
-      @addNotification msg, '9ed2ff', 3000
+      @addNotification msg, '#9ed2ff', 3000
     addSuccess: (msg) ->
-      @addNotification msg, '99dba6', 3000
+      @addNotification msg, '#99dba6', 3000
     addWarning: (msg) ->
-      @addNotification msg, 'e8d0a1', 3000
+      @addNotification msg, '#e8d0a1', 3000
     addError: (msg) ->
-      @addNotification msg, 'ecb1b1', 4000
+      @addNotification msg, '#ecb1b1', 4000
 
   clipboard:
     clipboard:
