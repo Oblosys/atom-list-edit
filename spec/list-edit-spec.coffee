@@ -1,5 +1,10 @@
 ListEdit = require '../lib/list-edit'
 
+expectNoErrorsOrWarnings = ->
+  expect(atom.notifications.addWarning).not.toHaveBeenCalled();
+  expect(atom.notifications.addError).not.toHaveBeenCalled();
+  expect(atom.notifications.addFatalError).not.toHaveBeenCalled();
+
 describe 'ListEdit', ->
   [editor, editorView] = []
 
@@ -18,11 +23,18 @@ describe 'ListEdit', ->
         #       we need to dispatch to atom.views.getView(editor) instead of atom.views.getView(atom.workspace)
         atom.commands.dispatch editorView, 'list-edit:copy'
         # Activate package with a neutral list-edit:copy, so the test edit commands don't have to deal with activation.
+        spyOn atom.notifications, 'addWarning'
+        spyOn atom.notifications, 'addError'
+        spyOn atom.notifications, 'addFatalError'
         activationPromise
         # TODO: Would be nice if we could do this just once, instead of for each spec, but waitsForPromise does
         #       not seem to work in describe (unlike what the documentation suggests.)
 
+
   describe 'list-copy', ->
+    afterEach ->
+      expectNoErrorsOrWarnings()
+
     it 'copies the selected range to the clipboard', ->
       #               01234567890123456789012345678901234567890
       editor.setText '[   Blinky ,  Pinky ,  Inky ,  Clyde   ]'
@@ -38,6 +50,9 @@ describe 'ListEdit', ->
         })
 
   describe 'list-cut', ->
+    afterEach ->
+      expectNoErrorsOrWarnings()
+
     it 'Cursor inside element in singleton list cuts element and whitespace', ->
       editor.setText '[ Single ]'
       editor.setCursorBufferPosition [0, 3]
@@ -57,6 +72,9 @@ describe 'ListEdit', ->
       expect(editor.getText()).toBe '[Blinky, Inky, Clyde]'
 
   describe 'list-paste', ->
+    afterEach ->
+      expectNoErrorsOrWarnings()
+
     it 'pastes clipboard element with correct whitespace and separator when cursor is before first element of multi-element list', ->
       listCopyFrom '[NewGhost]', 0, 2
       editor.setText '[Blinky, Pinky, Inky, Clyde]'
@@ -86,6 +104,8 @@ describe 'ListEdit', ->
       expect(editor.getText()).toBe '[Blinky, NewGhost, Inky, Clyde]'
 
   describe 'list-copy/paste between lists', ->
+    afterEach ->
+      expectNoErrorsOrWarnings()
 
   # 0123456789012345678
     verticalListTxt = '''
@@ -139,9 +159,6 @@ describe 'ListEdit', ->
       expect(editor.getText()).toBe '[   Clyde   ]'
 
   describe 'separator defaulting', ->
-    beforeEach ->
-      spyOn(atom.notifications, 'addWarning')
-
     it 'warns when a default separator is used', ->
       listCopyFrom '[NoSep]', 0, 3
       editor.setText '{NoSepEither}'
@@ -149,6 +166,8 @@ describe 'ListEdit', ->
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '{NoSep; NoSepEither}'
       expect(atom.notifications.addWarning).toHaveBeenCalledWith('Separator unknown, using default: \';\'');
+      expect(atom.notifications.addError).not.toHaveBeenCalled();
+      expect(atom.notifications.addFatalError).not.toHaveBeenCalled();
 
     it 'does not warn when a default separator isn\'t used because target range wasn\'t empty', ->
       listCopyFrom '[NoSep]', 0, 3
@@ -156,7 +175,7 @@ describe 'ListEdit', ->
       editor.setCursorBufferPosition [0, 7] # paste on two
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '{one, NoSep, three}'
-      expect(atom.notifications.addWarning).not.toHaveBeenCalled();
+      expectNoErrorsOrWarnings()
 
     it 'does not warn when a default separator isn\'t used because target list was empty', ->
       listCopyFrom '[NoSep]', 0, 3
@@ -164,7 +183,7 @@ describe 'ListEdit', ->
       editor.setCursorBufferPosition [0, 1] # paste in empty list
       atom.commands.dispatch editorView, 'list-edit:paste'
       expect(editor.getText()).toBe '{NoSep}'
-      expect(atom.notifications.addWarning).not.toHaveBeenCalled();
+      expectNoErrorsOrWarnings()
 
 describe 'ListEdit on a file with a JavaScript grammar', ->
   [editor, editorView] = []
@@ -182,7 +201,13 @@ describe 'ListEdit on a file with a JavaScript grammar', ->
         #       we need to dispatch to atom.views.getView(editor) instead of atom.views.getView(atom.workspace)
         atom.commands.dispatch editorView, 'list-edit:copy'
         # Activate package with a neutral list-edit:copy, so the test edit commands don't have to deal with activation.
+        spyOn atom.notifications, 'addWarning'
+        spyOn atom.notifications, 'addError'
+        spyOn atom.notifications, 'addFatalError'
         activationPromise
+
+  afterEach ->
+    expectNoErrorsOrWarnings()
 
   it 'correctly scans strings and comments', ->
     #               01234567890123456789 01234567 890123456789012 34567890123456789012345
