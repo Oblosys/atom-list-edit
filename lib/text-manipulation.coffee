@@ -258,12 +258,18 @@ module.exports = TextManipulation =
     , (textBuffer.characterIndexForPosition range.end) ]
 
 
-  # hacky first versions of bracket-character functions:
+  separatorChars: ';,'
+
+  # TODO: create a datastructure for these so we can take them from config.cson
+  openBracketChars:  '[{('
+  closeBracketChars: ']})'
+  defaultSepChars:   ',;,'
 
   # assumes c is character
   isSeparator: (c) ->
-    ',;'.indexOf(c) != -1 # ':' is sometimes a separator, but allowing it breaks list-edit for JSON objects
-  # TODO: Use priorities for determining the separator, so we only take ':' when there is no ',' or ';'?
+    @separatorChars.indexOf(c) != -1
+    # ':' is sometimes a separator, but allowing it breaks list-edit for JSON objects
+    # TODO: Use priorities for determining the separator, so we only take ':' when there is no ',' or ';'?
 
   # Strings (using whitespace as separator) are tricky, as they can be mistakenly assumed to be open/close bracket
   # e.g. '["Blinky", Inky, "Pinky"]' with cursor on Inky may recognize '", Inky ,"' as list.
@@ -274,33 +280,35 @@ module.exports = TextManipulation =
 
   # assumes c is character
   isOpeningBracket: (c) ->
-    '{[('.indexOf(c) != -1
+    @openBracketChars.indexOf(c) != -1
 
   # assumes c is character
   isClosingBracket: (c) ->
-    '}])'.indexOf(c) != -1
+    @closeBracketChars.indexOf(c) != -1
 
   getClosingBracketFor: (openingBracket) ->
-    switch openingBracket
-      when '{' then '}'
-      when '[' then ']'
-      when '(' then ')'
-      else console.error 'Unknown opening bracket \'' + openingBracket + '\''
+    ix = @openBracketChars.indexOf(openingBracket)
+    if ix >= 0
+      @closeBracketChars[ix]
+    else
+      atom.notifications.addFatalError 'List-edit: Unknown opening bracket \'' + openingBracket + '\''
+      undefined
 
   getOpeningBracketFor: (closingBracket) ->
-    switch closingBracket
-      when '}' then '{'
-      when ']' then '['
-      when ')' then '('
-      else console.error 'Unknown closing bracket \'' + closingBracket + '\''
+    ix = @closeBracketChars.indexOf(closingBracket)
+    if ix >= 0
+      @openBracketChars[ix]
+    else
+      atom.notifications.addFatalError 'List-edit: Unknown closing bracket \'' + closingBracket + '\''
+      undefined
 
-  # TODO: Allow these to be configured
   getDefaultSeparatorFor: (openingBracket) ->
-    switch openingBracket
-      when '{' then ';'
-      when '[' then ','
-      when '(' then ','
-      else console.error 'Unknown opening bracket \'' + openingBracket + '\''
+    ix = @openBracketChars.indexOf(openingBracket)
+    if ix >= 0
+      @defaultSepChars[ix]
+    else
+      atom.notifications.addFatalError 'List-edit: Unknown opening bracket \'' + openingBracket + '\''
+      undefined
 
   getLeadingWhitespace: (text) ->
     (/^\s*/.exec(text) ? [''])[0]

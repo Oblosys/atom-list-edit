@@ -67,8 +67,11 @@ describe 'TextManipulation', ->
       expect(TextManipulation.getClosingBracketFor('{')).toBe('}')
     it 'handles \'(\'', ->
       expect(TextManipulation.getClosingBracketFor('(')).toBe(')')
-    it 'handles \'x\'', ->
+    it 'gives a fatal error on a non-existent opening bracket', ->
+      spyOn(atom.notifications, 'addFatalError')
       expect(TextManipulation.getClosingBracketFor('x')).toBe(undefined)
+      expect(atom.notifications.addFatalError).toHaveBeenCalledWith("List-edit: Unknown opening bracket 'x'");
+
 
   describe 'getOpeningBracketFor', ->
     it 'handles \']\'', ->
@@ -78,7 +81,9 @@ describe 'TextManipulation', ->
     it 'handles \')\'', ->
       expect(TextManipulation.getOpeningBracketFor(')')).toBe('(')
     it 'handles \'x\'', ->
+      spyOn(atom.notifications, 'addFatalError')
       expect(TextManipulation.getOpeningBracketFor('x')).toBe(undefined)
+      expect(atom.notifications.addFatalError).toHaveBeenCalledWith("List-edit: Unknown closing bracket 'x'");
 
   describe 'getDefaultSeparatorFor', ->
     it 'handles \'[\'', ->
@@ -88,7 +93,9 @@ describe 'TextManipulation', ->
     it 'handles \'(\'', ->
       expect(TextManipulation.getDefaultSeparatorFor('(')).toBe(',')
     it 'handles \'x\'', ->
+      spyOn(atom.notifications, 'addFatalError')
       expect(TextManipulation.getDefaultSeparatorFor('x')).toBe(undefined)
+      expect(atom.notifications.addFatalError).toHaveBeenCalledWith("List-edit: Unknown opening bracket 'x'");
 
   describe 'findMatchingClosingBracket', ->
     #             012345678901234
