@@ -2,6 +2,94 @@ _ = require 'underscore-plus'
 TextManipulation = require '../lib/text-manipulation'
 
 describe 'TextManipulation', ->
+  describe 'isSeparator', ->
+    it '\',\' is a separator', ->
+      expect(TextManipulation.isSeparator(',')).toBe(true)
+    it '\';\' is a separator', ->
+      expect(TextManipulation.isSeparator(',')).toBe(true)
+    it '\':\' is not a separator', ->
+      expect(TextManipulation.isSeparator(':')).toBe(false)
+    it '\'|\' is not a separator', ->
+      expect(TextManipulation.isSeparator(':')).toBe(false)
+    it '\'x\' is not a separator', ->
+      expect(TextManipulation.isSeparator('x')).toBe(false)
+
+  describe 'isOpeningBracket', ->
+    it '\'[\' is an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('[')).toBe(true)
+    it '\'{\' is an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('{')).toBe(true)
+    it '\'(\' is an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('(')).toBe(true)
+    it '\'"\' is not an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('"')).toBe(false)
+    it '\'\'\' is not an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('\'')).toBe(false)
+    it '\'`\' is not an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('`')).toBe(false)
+    it '\']\' is not an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket(']')).toBe(false)
+    it '\'}\' is not an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('}')).toBe(false)
+    it '\')\' is not an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket(')')).toBe(false)
+    it '\'x\' is not an opening bracket', ->
+      expect(TextManipulation.isOpeningBracket('x')).toBe(false)
+
+  describe 'isClosingBracket', ->
+    it '\']\' is a closing bracket', ->
+      expect(TextManipulation.isClosingBracket(']')).toBe(true)
+    it '\'}\' is a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('}')).toBe(true)
+    it '\')\' is a closing bracket', ->
+      expect(TextManipulation.isClosingBracket(')')).toBe(true)
+    it '\'<\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('<')).toBe(false)
+    it '\'"\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('"')).toBe(false)
+    it '\'\'\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('\'')).toBe(false)
+    it '\'`\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('`')).toBe(false)
+    it '\'[\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('[')).toBe(false)
+    it '\'{\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('{')).toBe(false)
+    it '\'(\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('(')).toBe(false)
+    it '\'x\' is not a closing bracket', ->
+      expect(TextManipulation.isClosingBracket('x')).toBe(false)
+
+  describe 'getClosingBracketFor', ->
+    it 'handles \'[\'', ->
+      expect(TextManipulation.getClosingBracketFor('[')).toBe(']')
+    it 'handles \'{\'', ->
+      expect(TextManipulation.getClosingBracketFor('{')).toBe('}')
+    it 'handles \'(\'', ->
+      expect(TextManipulation.getClosingBracketFor('(')).toBe(')')
+    it 'handles \'x\'', ->
+      expect(TextManipulation.getClosingBracketFor('x')).toBe(undefined)
+
+  describe 'getOpeningBracketFor', ->
+    it 'handles \']\'', ->
+      expect(TextManipulation.getOpeningBracketFor(']')).toBe('[')
+    it 'handles \'}\'', ->
+      expect(TextManipulation.getOpeningBracketFor('}')).toBe('{')
+    it 'handles \')\'', ->
+      expect(TextManipulation.getOpeningBracketFor(')')).toBe('(')
+    it 'handles \'x\'', ->
+      expect(TextManipulation.getOpeningBracketFor('x')).toBe(undefined)
+
+  describe 'getDefaultSeparatorFor', ->
+    it 'handles \'[\'', ->
+      expect(TextManipulation.getDefaultSeparatorFor('[')).toBe(',')
+    it 'handles \'{\'', ->
+      expect(TextManipulation.getDefaultSeparatorFor('{')).toBe(';')
+    it 'handles \'(\'', ->
+      expect(TextManipulation.getDefaultSeparatorFor('(')).toBe(',')
+    it 'handles \'x\'', ->
+      expect(TextManipulation.getDefaultSeparatorFor('x')).toBe(undefined)
+
   describe 'findMatchingClosingBracket', ->
     #             012345678901234
     bufferText = '[1,[[],2,3],4]'
