@@ -36,7 +36,7 @@ Point.fromObj = (obj) ->
     console.error 'Point.fromObj parameter is Point nor Array: '
     console.dir obj
 
-class TextManager
+class Buffer
   $editableDiv: null
 
   constructor: ($editableDiv) ->
@@ -214,6 +214,9 @@ class TextManager
     winSelection.removeAllRanges()
     winSelection.addRange docRange
 
+  delete: (range) ->
+    @setTextInRange range, ''
+
   setTextInRange: (range, text) ->
     range = Range.fromObj range
     rangeStartIx = @characterIndexForPosition range.start
@@ -279,36 +282,6 @@ class TextManager
         ix = nextNewline + 1
       r++
     Math.min ix + col, bufferText.length
-
-class Buffer
-  textManager: null
-
-  constructor: ($editableDiv) ->
-    @textManager = new TextManager($editableDiv)
-
-  getText: ->
-    @textManager.getText()
-
-  setText: (txt) ->
-    @textManager.setText txt
-
-  getSelectionRange: ->
-    @textManager.getSelectionRange()
-
-  setSelectionRange: (range) ->
-    @textManager.setSelectionRange range
-
-  delete: (range) ->
-    @setTextInRange range, ''
-
-  setTextInRange: (range, text) ->
-    @textManager.setTextInRange range, text
-
-  positionForCharacterIndex: (ix) ->
-    @textManager.positionForCharacterIndex ix
-
-  characterIndexForPosition: (pos) ->
-    @textManager.characterIndexForPosition pos
 
 
 module.exports = atom =
