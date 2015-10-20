@@ -5,8 +5,8 @@ class Range
   end: null
 
   constructor: (start, end) ->
-    @start = start
-    @end = end
+    @start = Point.fromObj start
+    @end   = Point.fromObj end
 
 # Not in prototype, because fromObj is a static method
 Range.fromObj = (obj) ->
