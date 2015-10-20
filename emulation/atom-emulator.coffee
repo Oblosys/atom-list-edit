@@ -170,6 +170,19 @@ class TextManager
         console.error 'getNodeAndOffsetForPos: line not terminated by <BR>'
         return null
 
+  getText: ->
+    textLines =
+      for nodeLine in @getNodeLines()
+        _.map nodeLine, (n) -> if n.nodeType == Node.TEXT_NODE then n.textContent else ''
+          .join('')
+    textLines.join('\n')
+
+  setText: (txt) ->
+    @$editableDiv.empty()
+    for line in txt.split '\n'
+      lineDiv = $('<div>').text line
+      @$editableDiv.append lineDiv
+
   getSelectionRange: ->
     sel = window.getSelection()
     nodeLines = @getNodeLines()
@@ -187,41 +200,12 @@ class TextManager
       # if any of the selection points is not in the editable div, return empty selection at [0,0]
       new Range([0,0], [0,0])
 
-
-  getText: ->
-    textLines =
-      for nodeLine in @getNodeLines()
-        _.map nodeLine, (n) -> if n.nodeType == Node.TEXT_NODE then n.textContent else ''
-          .join('')
-    textLines.join('\n')
-
-  setText: (txt) ->
-    @$editableDiv.empty()
-    for line in txt.split '\n'
-      lineDiv = $('<div>').text line
-      @$editableDiv.append lineDiv
-
-class Buffer
-  textManager: null
-
-  constructor: ($editableDiv) ->
-    @textManager = new TextManager($editableDiv)
-
-  getText: ->
-    @textManager.getText()
-
-  setText: (txt) ->
-    @textManager.setText txt
-
-  getSelectionRange: ->
-    @textManager.getSelectionRange()
-
   setSelectionRange: (range) ->
     range = Range.fromObj(range)
-    nodeLines = @textManager.getNodeLines()
+    nodeLines = @getNodeLines()
 
-    {node: startNode, offset: startOffset} = @textManager.getNodeAndOffsetForPos nodeLines, range.start
-    {node: endNode,   offset: endOffset}   = @textManager.getNodeAndOffsetForPos nodeLines, range.end
+    {node: startNode, offset: startOffset} = @getNodeAndOffsetForPos nodeLines, range.start
+    {node: endNode,   offset: endOffset}   = @getNodeAndOffsetForPos nodeLines, range.end
 
     docRange = document.createRange()
     winSelection = window.getSelection()
@@ -229,10 +213,6 @@ class Buffer
     docRange.setEnd endNode, endOffset
     winSelection.removeAllRanges()
     winSelection.addRange docRange
-
-
-  delete: (range) ->
-    @setTextInRange range, ''
 
   setTextInRange: (range, text) ->
     range = Range.fromObj range
@@ -254,7 +234,6 @@ class Buffer
                    when selEndIx < rangeEndIx    then rangeStartIx
                    else                               selEndIx - rangeLength + insertedLength
     @setSelectionRange(range)
-    # TODO: move to TextManager
     if text != ''
       try
         # Firefox sometime throws exceptions on inserting '\n', even if we fist call delete,
@@ -300,6 +279,36 @@ class Buffer
         ix = nextNewline + 1
       r++
     Math.min ix + col, bufferText.length
+
+class Buffer
+  textManager: null
+
+  constructor: ($editableDiv) ->
+    @textManager = new TextManager($editableDiv)
+
+  getText: ->
+    @textManager.getText()
+
+  setText: (txt) ->
+    @textManager.setText txt
+
+  getSelectionRange: ->
+    @textManager.getSelectionRange()
+
+  setSelectionRange: (range) ->
+    @textManager.setSelectionRange range
+
+  delete: (range) ->
+    @setTextInRange range, ''
+
+  setTextInRange: (range, text) ->
+    @textManager.setTextInRange range, text
+
+  positionForCharacterIndex: (ix) ->
+    @textManager.positionForCharacterIndex ix
+
+  characterIndexForPosition: (pos) ->
+    @textManager.characterIndexForPosition pos
 
 
 module.exports = atom =
