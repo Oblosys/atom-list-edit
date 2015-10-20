@@ -180,7 +180,11 @@ class Buffer
   setText: (txt) ->
     @$editableDiv.empty()
     for line in txt.split '\n'
-      lineDiv = $('<div>').text line
+      lineDiv = $('<div>')
+      if line.length > 0
+        lineDiv.text line
+      else
+        lineDiv.append $('<br>')
       @$editableDiv.append lineDiv
 
   getSelectionRange: ->
