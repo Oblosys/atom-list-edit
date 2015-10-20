@@ -15,7 +15,7 @@ Range.fromObj = (obj) ->
   else if Array.isArray(obj)
     return new (atom.Range)(obj[0], obj[1])
   else
-    console.error 'rangeFromObj parameter is Range nor Array: '
+    console.error 'Range.fromObj parameter is Range nor Array: '
     console.dir obj
 
 class Point
@@ -33,7 +33,7 @@ Point.fromObj = (obj) ->
   else if Array.isArray(obj)
     return new (atom.Point)(obj[0], obj[1])
   else
-    console.error 'fromObj parameter is Point nor Array: '
+    console.error 'Point.fromObj parameter is Point nor Array: '
     console.dir obj
 
 class TextManager
