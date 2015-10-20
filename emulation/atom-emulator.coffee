@@ -309,6 +309,8 @@ module.exports = atom =
       @addNotification msg, '#e8d0a1', 3000
     addError: (msg) ->
       @addNotification msg, '#ecb1b1', 4000
+    addFatalError: (msg) ->
+      @addNotification msg, '#ecb1b1', 4000
 
   clipboard:
     clipboard:
