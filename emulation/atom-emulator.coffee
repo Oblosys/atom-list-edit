@@ -114,7 +114,6 @@ class Buffer
    * @return {Point}    The row and column for the selected node in content-editable text
   ###
   getNodePos: (nodeLines, baseNode, offset) ->
-    console.log 'NODELINES\n' + @showNodeLines nodeLines
     [baseNode, nodeOffset] =
       switch
         when baseNode.nodeType == Node.TEXT_NODE
@@ -250,11 +249,9 @@ class Buffer
     else
       document.execCommand 'delete'
 
-    console.log 'new selection:' + JSON.stringify [@positionForCharacterIndex(selStartIx),@positionForCharacterIndex(selEndIx)]
+    # console.log 'new selection:' + JSON.stringify [@positionForCharacterIndex(selStartIx),@positionForCharacterIndex(selEndIx)]
 
     @setSelectionRange [@positionForCharacterIndex(selStartIx), @positionForCharacterIndex(selEndIx)]
-
-    # TODO: check if okay when selection was null
 
   positionForCharacterIndex: (ix) ->
     bufferText = @getText()
@@ -412,21 +409,6 @@ module.exports = atom =
     if event.altKey and !event.shiftKey and event.metaKey and !event.ctrlKey or event.ctrlKey and !event.metaKey
       switch event.keyCode
         when 83
-          # console.log '[' + window.getSelection().anchorOffset + ',' + window.getSelection().focusOffset + ']'
-          # # document.execCommand 'insertText', false, 'XX'
-          # $editableDiv = jQuery('.text-buffer')
-          # console.log 'editableDiv: ' + $editableDiv.text();
-          # el = $editableDiv[0]
-          # range = document.createRange()
-          # sel = window.getSelection()
-          # range.setStart(el.childNodes[0], 5);
-          # range.setEnd(el.childNodes[0], 107);
-          # sel.removeAllRanges();
-          # sel.addRange(range);
-
-          # console.log '[' + window.getSelection().anchorOffset + ',' + window.getSelection().focusOffset + ']'
-          #document.execCommand 'insertText', false, '\n'
-          #console.log JSON.stringify atom.workspace.editor.buffer.getSelectionRange()
           atom.commands.dispatch(null, 'list-edit:select')
         when 88
           atom.commands.dispatch(null, 'list-edit:cut')
