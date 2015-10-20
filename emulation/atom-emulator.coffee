@@ -393,8 +393,17 @@ module.exports = atom =
     atom.workspace.editor.buffer = new Buffer($editableDiv)
     $editableDiv.attr 'spellcheck', false
     $editableDiv.keydown @keyHandler.bind this
-    $editableDiv.focus()
-    # document.execCommand 'insertText', false, '[ 111\n, 222\n, 333\n]'
+    atom.workspace.editor.buffer.setText """
+    [ Inky, Dinky, [some, inner, nesting], Pinky, (1,2,3) ]
+
+    o = { p2: 'B'
+        , p3: 'C'
+        , p1: { x: 10
+              , y: 20
+              }
+        }
+    """
+
     setTimeout ( ->
       atom.notifications.addSuccess 'Atom emulator initialized'
     ), 300 # Small delay to see it appear after page has loaded
