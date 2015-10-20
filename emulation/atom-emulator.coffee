@@ -42,43 +42,42 @@ class TextManager
   constructor: ($editableDiv) ->
     @$editableDiv = $editableDiv
 
+  ###*
+   * Traverse the content-editable node, and return a list of text nodes for each line.
+   * Empty lines will consist of a single <BR> node, and non-empty lines are optionally
+   * terminated by a <BR> node.
+   *
+   * @return {Node[][]} List of list of text nodes, possibly terminated by a <BR> node.
+  ###
   getNodeLines: ->
     root = @$editableDiv[0]
     @traverse root.childNodes
 
-  # span inserted by Chrome
-  # <br> at end of line is used for selection, by Chrome, but selection at and of preceding text elt also works
 
-  # TODO: check if this is really the case, and this thing works
-  # because newlines are always encoded with a br (todo, maybe newline when we implement is) we don't have to
-  # recreate complex line break patterns of nested divs and spans
+  # Different browsers edit the node tree differently, sometimes inserting divs for line breaks (Chrome/Safari)
+  # or unnecessary spans on paste (Chrome). Empty lines are always represented by a <BR> though, so we can
+  # reconstruct the text lines without a full div/span layout engine.
   traverse: (nodes) ->
     nodeLines = []
     currentLine = []
     for node,i in nodes
-      # console.log node,i
       switch node.nodeType
         when Node.TEXT_NODE
-          # console.log '### text'
           currentLine.push node
         when Node.ELEMENT_NODE
           switch node.tagName
             when 'DIV'
-              # console.log 'div'
               if currentLine.length > 0
                 nodeLines.push currentLine
                 currentLine = []
               nodeLines = nodeLines.concat @traverse node.childNodes
-              # console.log 'd' + @showNodeLines traverse node.childNodes
-            when 'SPAN'
+            when 'SPAN' # Chrome sometimes insert spans on a paste
               spanNodeLines = @traverse node.childNodes
               if spanNodeLines.length > 0
                 currentLine = currentLine.concat spanNodeLines[0]
-              if spanNodeLines.length > 1
-                console.log 'WEIRD: line break in span'
-                # TODO: check these
+              if spanNodeLines.length > 1 # span contained line breaks.
                 nodeLines.push currentLine
-                nodeLines = nodeLines.concat _.init spanNodeLines
+                nodeLines = nodeLines.concat _.initial spanNodeLines
                 currentLine = _.last spanNodeLines
             when 'BR'
               currentLine.push node
@@ -91,7 +90,6 @@ class TextManager
     if currentLine.length > 0
       nodeLines.push currentLine
       currentLine = []
-    # console.log 's' + @showNodeLines nodeLines
     nodeLines
 
   showNodeLines: (nodeLines) ->
@@ -105,76 +103,90 @@ class TextManager
       ns.join ','
     ls.join '\n'
 
-  # only for text nodes and BR (BR only comes from Chrome)
-  getNodePos: (nodeLines, selNode, offset) ->
-    # console.log selNode, offset
-    # offset is either position in text, or nr of BR child in parent node (which gets offset 0)
+  ###*
+   * Convert node-based position to row/column-based position. End of line can be represented
+   * by a right-most offset on the last text node on the line, or the index of the <BR> node on
+   * the line (Chrome)
+   *
+   * @param  {Node[][]} nodeLines  Node lines for the content-editable tree
+   * @param  {Number}   baseNode   Base node for the selection
+   * @param  {Number}   offset     Offset in node
+   * @return {Point}    The row and column for the selected node in content-editable text
+  ###
+  getNodePos: (nodeLines, baseNode, offset) ->
+    console.log 'NODELINES\n' + @showNodeLines nodeLines
     [baseNode, nodeOffset] =
-      switch selNode.nodeType
-        when Node.TEXT_NODE
-          [selNode, offset]
-        when Node.ELEMENT_NODE
-          # console.log 'Element node, offset: '+offset
-          # console.log node
-          # console.log node.childNodes[offset]
-          [selNode.childNodes[offset], 0]
+      switch
+        when baseNode.nodeType == Node.TEXT_NODE
+          # offset is position in text node
+          [baseNode, offset]
+        when baseNode.nodeType == Node.ELEMENT_NODE
+          # offset is index of <BR> child in parent node (which gets offset 0)
+          [baseNode.childNodes[offset], 0]
         else
-          console.error 'getNodePos: unhandled node type or tagName: ' + selNode.nodeType + ' & ' + selNode.tagName
+          console.error 'getNodePos: unhandled baseNode nodeType: ' + baseNode.nodeType
+          null
+
     for line, lineNr in nodeLines
       ix = line.indexOf baseNode
       if ix >= 0
         precedingNodes = line.slice 0, ix
         precedingLength = 0
         for n in precedingNodes
-          # TODO: check node type?
-          precedingLength += n.textContent.length
-        return [lineNr, precedingLength + nodeOffset]
+          if n.nodeType == Node.TEXT_NODE
+            precedingLength += n.textContent.length
+          else
+            console.error 'getNodePos: unhandled node type ' + node.nodeType
+        return new Point(lineNr, precedingLength + nodeOffset)
     return null
 
-  getSelectionPoss: ->
+  ###*
+   * Convert row/column-based position to node based-position
+   *
+   * @param  {Node[][]} nodeLines Node lines for the content-editable tree
+   * @param {Point}     pos       Position in the content-editable text
+   * @return {{node: Node, offset: number}}  Node and offset corresponding to pos
+  ###
+  getNodeAndOffsetForPos: (nodeLines, pos) ->
+    {row: rowNr, column: colNr} = Point.fromObj pos
+    nodeLine = nodeLines[rowNr]
+    textNodes = _.where nodeLine, {nodeType: Node.TEXT_NODE}
+    if textNodes.length > 0
+      relativeCol = colNr
+      for node in nodeLine
+        textLen = node.textContent.length
+        if relativeCol <= textLen
+          return {node: node, offset: relativeCol} # somewhere in a text node
+        else
+          relativeCol -= textLen
+      lastTextNode = _.last textNodes
+      return {node: lastTextNode, offset: lastTextNode.length} # beyond the last text node
+
+    else
+      brNode = nodeLine?[0]
+      if brNode?
+        return {node: brNode, offset: 0} # no text nodes, so return <BR> node with offset 0
+      else
+        console.error 'getNodeAndOffsetForPos: line not terminated by <BR>'
+        return null
+
+  getSelectionRange: ->
     sel = window.getSelection()
     nodeLines = @getNodeLines()
     # console.dir nodeLines
     anchorPos = @getNodePos nodeLines, sel.anchorNode, sel.anchorOffset
     focusPos  = @getNodePos nodeLines, sel.focusNode,  sel.focusOffset
     if anchorPos? and focusPos?
-      # Return ordered selection
-      if anchorPos[0] < focusPos[0] || anchorPos[0] == focusPos[0] && anchorPos[1] <= focusPos[1]
-        [anchorPos, focusPos]
+      # Always return lexicographicaly ordered selection (ie. start is before end)
+      if anchorPos.row < focusPos.row ||
+         anchorPos.row == focusPos.row && anchorPos.column <= focusPos.column
+        new Range(anchorPos, focusPos)
       else
-        [focusPos, anchorPos]
+        new Range(focusPos, anchorPos)
     else
       # if any of the selection points is not in the editable div, return empty selection at [0,0]
-      [[0,0], [0,0]]
+      new Range([0,0], [0,0])
 
-  setDocSelection: (startNode, startOffset, endNode, endOffset) ->
-    docRange = document.createRange()
-    winSelection = window.getSelection()
-    docRange.setStart startNode, startOffset
-    docRange.setEnd endNode, endOffset
-    winSelection.removeAllRanges()
-    winSelection.addRange docRange
-
-  # TODO: use point or array
-  getNodeAndOffsetForPos: (rowNr, colNr) ->
-    console.log "getNodeAndOffsetForPos: #{rowNr} #{colNr}"
-    nodeLines = @getNodeLines()
-    nodeLine = nodeLines[rowNr]
-    relativeCol = colNr
-    for node, i in nodeLine
-      if node.nodeType == Node.TEXT_NODE
-        textLen = node.textContent.length
-        if relativeCol <= textLen
-          return [node, relativeCol]
-        else
-          relativeCol -= textLen
-      else if node.nodeType == Node.ELEMENT_NODE && node.tagName == 'BR'
-        return [node, 0]
-        break;
-      else # We should only have text and a single <br>
-         console.error 'getNodeAndOffsetForPos: unhandled node type or tagName: ' + node.nodeType + ' & ' + node.tagName
-    ## TODO: handle beyond end of line, and don't return br, but simply last text elt
-    return null
 
   getText: ->
     textLines =
@@ -202,14 +214,22 @@ class Buffer
     @textManager.setText txt
 
   getSelectionRange: ->
-    [anchorPos,focusPos] = @textManager.getSelectionPoss()
-    new Range( [anchorPos[0], anchorPos[1]], [focusPos[0], focusPos[1]] )
+    @textManager.getSelectionRange()
 
   setSelectionRange: (range) ->
     range = Range.fromObj(range)
-    [startNode, startOffset] = @textManager.getNodeAndOffsetForPos range.start.row, range.start.column
-    [endNode,   endOffset]   = @textManager.getNodeAndOffsetForPos range.end.row, range.end.column
-    @textManager.setDocSelection startNode, startOffset, endNode, endOffset
+    nodeLines = @textManager.getNodeLines()
+
+    {node: startNode, offset: startOffset} = @textManager.getNodeAndOffsetForPos nodeLines, range.start
+    {node: endNode,   offset: endOffset}   = @textManager.getNodeAndOffsetForPos nodeLines, range.end
+
+    docRange = document.createRange()
+    winSelection = window.getSelection()
+    docRange.setStart startNode, startOffset
+    docRange.setEnd endNode, endOffset
+    winSelection.removeAllRanges()
+    winSelection.addRange docRange
+
 
   delete: (range) ->
     @setTextInRange range, ''
@@ -236,7 +256,9 @@ class Buffer
     @setSelectionRange(range)
     # TODO: move to TextManager
     if text != ''
-      try # Firefox sometime throws exceptions on inserting '\n', even if we fist call delete, so we need to ignore this :-(
+      try
+        # Firefox sometime throws exceptions on inserting '\n', even if we fist call delete,
+        # so we need to ignore these :-(
         document.execCommand 'insertText', false, text
       catch
     else
@@ -246,7 +268,7 @@ class Buffer
 
     @setSelectionRange [@positionForCharacterIndex(selStartIx), @positionForCharacterIndex(selEndIx)]
 
-    # TODO: check if okay when selecion was null
+    # TODO: check if okay when selection was null
 
   positionForCharacterIndex: (ix) ->
     bufferText = @getText()
