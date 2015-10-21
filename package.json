@@ -1,13 +1,24 @@
 {
   "name": "list-edit",
   "main": "./lib/list-edit",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "List-aware cut, copy & paste operations that automatically handle separators and whitespace.",
-  "keywords": [ "list", "edit", "cut", "copy", "paste", "separator", "whitespace"],
+  "keywords": [
+    "list",
+    "edit",
+    "cut",
+    "copy",
+    "paste",
+    "separator",
+    "whitespace"
+  ],
   "activationCommands": {
-    "atom-text-editor": [ "list-edit:select", "list-edit:cut", "list-edit:copy"
-                        , "list-edit:paste"
-                        ]
+    "atom-text-editor": [
+      "list-edit:select",
+      "list-edit:cut",
+      "list-edit:copy",
+      "list-edit:paste"
+    ]
   },
   "repository": "https://github.com/Oblosys/atom-list-edit",
   "license": "MIT",
