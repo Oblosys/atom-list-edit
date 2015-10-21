@@ -15,7 +15,7 @@ And even between different lists (with yet another layout):
 
 List-edit uses the grammar of the edited file to ignore strings and comments, but list detection takes place purely on a lexical level. Currently, `{}`, `[]`, and `()` are brackets, and `,` and `;` are separators.
 
-For more information, including a live demo of the package, visit [list-edit.oblomov.com](http://list-edit.oblomov.com).
+For more information, including a small emulator, in which you can try out the package, visit [list-edit.oblomov.com](http://list-edit.oblomov.com).
 
 ### Key bindings (Mac)
 
