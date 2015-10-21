@@ -393,14 +393,20 @@ module.exports = atom =
     atom.workspace.editor.buffer.setText """
     [ Inky, Dinky, [some, inner, nesting], Pinky, (1,2,3) ]
 
-    o = { p2: 'B'
-        , p3: 'C'
-        , p1: { x: 10
-              , y: 20
-              }
+    o = { radius: 32
+        , z: 2
+        , pos: { x: 4
+               , y: 3
+               }
+        }
+
+    main =
+     do { putStrLn "Hello world"
+        ; let x = [10, 20, 30, 40]
+        ; return ()
         }
     """
-
+    $editableDiv.focus()
     setTimeout ( ->
       atom.notifications.addSuccess 'Atom emulator initialized'
     ), 300 # Small delay to see it appear after page has loaded
