@@ -1,18 +1,29 @@
 # list-edit package  [![Build Status](https://travis-ci.org/Oblosys/atom-list-edit.svg?branch=master)](https://travis-ci.org/Oblosys/atom-list-edit)
 
-List-edit provides list-aware cut, copy, and paste operations that automatically handle separators and whitespace, while taking into account strings and comments. For example, to cut the first element from `[Three, One, Two]` and paste it at the end, you can do:
+List-edit provides list-aware cut, copy, and paste operations that automatically handle separators and whitespace, while taking into account strings and comments. For example, to cut the first element from `[Three, One, Two]` and paste it at the end:
 
 ![Single-line list edit](https://raw.githubusercontent.com/oblosys/atom-list-edit/master/img/single-line-list-edit.png)
 
-On `list-cut` the trailing separator and whitespace are removed, whereas on `list-paste` a leading separator and whitespace are inserted. To select a list element, it is sufficient to have the cursor inside the element instead of selecting a range.
-
-List-edit also works in a vertical layout:
+On `list-cut` the list element that contains the cursor is removed, together with its trailing separator and whitespace. After moving the cursor past the last element, `list-paste` inserts the cut element and puts a separator and whitespace in front of it. List-edit also works in a vertical layout and on multiple elements:
 
 ![Multi-line list edit](https://raw.githubusercontent.com/oblosys/atom-list-edit/master/img/multi-line-list-edit.png)
 
-List-edit commands recognize the edited list and whitespace associated with the brackets and separators. Strings and comments are ignored based on the grammar of the edited file, but list recognition takes place purely on a lexical level. Hence there exist pathological examples in which list-paste will yield unexpected results, but these are quite rare (see the section on separators and whitespace on [list-edit.oblomov.com](http://list-edit.oblomov.com#separator-handling) for more information).
+And even between different lists (with yet another layout):
 
-Currently, `{}`, `[]`, and `()` are considered brackets, and `,` and `;`
-separators. Besides list-cut, -copy, and -paste, there is also `list-select`, which only selects the list element(s), without affecting clipboard or text buffer.
+![List-edit between lists edit](https://raw.githubusercontent.com/oblosys/atom-list-edit/master/img/list-edit-between-lists.png)
+
+
+List-edit uses the grammar of the edited file to ignore strings and comments, but list detection takes place purely on a lexical level. Currently, `{}`, `[]`, and `()` are brackets, and `,` and `;` are separators.
 
 For more information, including a live demo of the package, visit [list-edit.oblomov.com](http://list-edit.oblomov.com).
+
+### Key bindings (Mac)
+
+Keys        | Command       | <br>
+----------- | ------------- | -------
+`alt-cmd-s` | `list-select` | Select element at cursor, or range of elements in selection
+`alt-cmd-x` | `list-cut`    | Cut elements (and separator+whitespace) at cursor/selection
+`alt-cmd-c` | `list-copy`   | Copy elements at cursor/selection to the clipboard
+`alt-cmd-v` | `list-paste`  | Paste elements (and separator+whitespace) at cursor/selection
+
+Windows and Linux keybindings use `ctrl-alt` instead of `alt-cmd`.
