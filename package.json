@@ -2,7 +2,7 @@
   "name": "list-edit",
   "main": "./lib/list-edit",
   "version": "0.0.1",
-  "description": "Cut, copy & paste operations on list elements, which automatically handle separators and whitespace.",
+  "description": "List-aware cut, copy & paste operations that automatically handle separators and whitespace.",
   "keywords": [ "list", "edit", "cut", "copy", "paste", "separator", "whitespace"],
   "activationCommands": {
     "atom-text-editor": [ "list-edit:select", "list-edit:cut", "list-edit:copy"
