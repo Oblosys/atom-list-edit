@@ -19,11 +19,11 @@ For more information, including a live demo of the package, visit [list-edit.obl
 
 ### Key bindings (Mac)
 
-Keys        | Command       | <br>
+Keys        | Command       | &nbsp;
 ----------- | ------------- | -------
-`alt-cmd-s` | `list-select` | Select element at cursor, or range of elements in selection
+<span style="white-space: nowrap">`alt-cmd-s`</span> | <span style="white-space: nowrap">`list-select`</span> | Select element at cursor, or range of elements in selection
 `alt-cmd-x` | `list-cut`    | Cut elements (and separator+whitespace) at cursor/selection
 `alt-cmd-c` | `list-copy`   | Copy elements at cursor/selection to the clipboard
 `alt-cmd-v` | `list-paste`  | Paste elements (and separator+whitespace) at cursor/selection
 
-Windows and Linux keybindings use `ctrl-alt` instead of `alt-cmd`.
+Windows and Linux key bindings use `ctrl-alt` instead of `alt-cmd`.
