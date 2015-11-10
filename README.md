@@ -17,7 +17,9 @@ List-edit uses the grammar of the edited file to ignore strings and comments, bu
 
 For more information, including a small emulator, in which you can try out the package, visit [list-edit.oblomov.com](http://list-edit.oblomov.com).
 
-### Key bindings (Mac)
+### Key bindings
+
+These are Mac key bindings, for Windows and Linux use `ctrl-alt` instead of `alt-cmd`.
 
 Keys        | Command       | &nbsp;
 ----------- | ------------- | -------
@@ -25,5 +27,3 @@ Keys        | Command       | &nbsp;
 `alt-cmd-x` | `list-cut`    | Cut elements (and separator+whitespace) at cursor/selection
 `alt-cmd-c` | `list-copy`   | Copy elements at cursor/selection to the clipboard
 `alt-cmd-v` | `list-paste`  | Paste elements (and separator+whitespace) at cursor/selection
-
-Windows and Linux key bindings use `ctrl-alt` instead of `alt-cmd`.
