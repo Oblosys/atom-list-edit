@@ -234,39 +234,39 @@ describe 'TextManipulation', ->
     bufferText = '{1,([],2,3),4}'
 
     it 'returns null when there is no enclosing list', ->
-      expect(TextManipulation.getElementList bufferText, [], [0,0])
+      expect(TextManipulation.ElementList.getElementList bufferText, [], [0,0])
         .toEqual(null)
 
     it 'returns the elements of the enclosing list even when index is immediately after opening tag', ->
-      expect(getEltRanges (TextManipulation.getElementList bufferText, [], [1,1]))
+      expect(getEltRanges (TextManipulation.ElementList.getElementList bufferText, [], [1,1]))
         .toEqual( [[1,2], [3,11], [12,13]] )
 
     it 'returns the elements of a nested list', ->
-      expect(getEltRanges (TextManipulation.getElementList bufferText, [], [4,4]))
+      expect(getEltRanges (TextManipulation.ElementList.getElementList bufferText, [], [4,4]))
         .toEqual( [[4,6], [7,8], [9,10]] )
 
     it 'returns the elements (i.e. []) of an empty list', ->
-      expect(getEltRanges (TextManipulation.getElementList bufferText, [], [5,5]))
+      expect(getEltRanges (TextManipulation.ElementList.getElementList bufferText, [], [5,5]))
         .toEqual( [] )
 
     it 'allows empty ranges', ->
-      expect(getEltRanges (TextManipulation.getElementList '[ ,, ]', [], [1,1]))
+      expect(getEltRanges (TextManipulation.ElementList.getElementList '[ ,, ]', [], [1,1]))
         .toEqual( [[2,2], [3,3], [4,4]] )
 
     it 'allows empty ranges at start and end', ->
-      expect(getEltRanges (TextManipulation.getElementList '[, ,]', [], [1,1]))
+      expect(getEltRanges (TextManipulation.ElementList.getElementList '[, ,]', [], [1,1]))
         .toEqual( [[1,1], [3,3], [4,4]] )
 
     #                        0123456789012345678901234
     bufferTextWithIgnores = '[ "one", "[a,b]", "two" ]'
     ignoreRanges = [[2,7], [9,16], [18,23]]
     it 'ignores brackets and separators in ignoreRanges', ->
-      expect(getEltRanges (TextManipulation.getElementList bufferTextWithIgnores, ignoreRanges, [11,14]))
+      expect(getEltRanges (TextManipulation.ElementList.getElementList bufferTextWithIgnores, ignoreRanges, [11,14]))
         .toEqual([[2,7], [9,16], [18,23]])
 
   describe 'getSelectionForRange', ->
     #                                            012345678901234567890123456789012345
-    listElts = (TextManipulation.getElementList '[   Blinky , Dinky , Pinky, Clyde  ]', [], [1,1]).elts
+    listElts = (TextManipulation.ElementList.getElementList '[   Blinky , Dinky , Pinky, Clyde  ]', [], [1,1]).elts
 
     it 'selects a single element when selection is inside the element', ->
       expect(TextManipulation.getSelectionForRange listElts, [5,5]).toEqual([0,1])

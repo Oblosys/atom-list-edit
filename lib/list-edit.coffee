@@ -183,7 +183,7 @@ module.exports = ListEdit =
       bufferText = textBuffer.getText()
       selectionIxRange = TextManipulation.getIxRangeForRange textBuffer, (editor.getSelectedBufferRange())
       ignoreRanges = @scanIgnoreRanges editor, textBuffer, bufferText
-      elementList = TextManipulation.getElementList bufferText, ignoreRanges, selectionIxRange
+      elementList = TextManipulation.ElementList.getElementList bufferText, ignoreRanges, selectionIxRange
       if not elementList?
         atom.notifications.addWarning 'Selection is not in well-formed list.'
       else

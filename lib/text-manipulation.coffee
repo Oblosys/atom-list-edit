@@ -2,12 +2,12 @@
 _ = require 'underscore-plus'
 
 class ListElement
-  start: 0
-  eltStart: 0
-  eltEnd: 0
-  end: 0
+  start: 0               # buffer text index of start of leading whitespace
+  eltStart: 0            # buffer text index of start of actual element (and end of leading whitespace)
+  eltEnd: 0              # buffer text index of end of actual element (and start of trailing whitespace)
+  end: 0                 # buffer text index of end of trailing whitespace
   leadingWhitespace: ''
-  strippedElement: ''
+  strippedElement: ''    # element string without whitespace
   trailingWhitespace: ''
 
   constructor: (bufferText, range) ->
@@ -22,53 +22,61 @@ class ListElement
     @eltEnd = @end - @trailingWhitespace.length
     @strippedElement = bufferText.slice @eltStart, @eltEnd
 
+
   show: ->
     'ListElement: [' + @start + ' - ' + @end + '> ' +
       'stripped: [' + @eltStart + ' - ' + @eltEnd + '> : ' +
       '"' + (if @strippedElement.length <= 8 then @strippedElement else
                 (@strippedElement.slice 0, 3) + '..' + (@strippedElement.slice -3)) + '"'
 
-module.exports = TextManipulation =
-  ListElement: ListElement
+class ElementList
+  startIx: 0                # start and end of the range inside the brackets
+  endIx: 0                  #
+  openBracket: null
+  initialWhitespace: ''     # whitespace trailing opening bracket
+  finalWhitespace:   ''     # whitespace leading closing bracket
+  separator: null           # for lists with more than 1 element: separator & whitespace: {leadingWhitespace: string, sepChar: string, trailingWhitespace: string}
+  elts: []
 
-  # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
-  getElementList: (bufferText, ignoreRanges, ixRange) ->
-    containingList = @getListContainingRange bufferText, ignoreRanges, ixRange
-    if not containingList?
-      null
+  constructor:  (bufferText, {listRange: [listStartIx,listEndIx], nonNestedRanges: nonNestedIxRanges}) ->
+    @startIx = listStartIx
+    @endIx  = listEndIx
+    @openBracket = bufferText[listStartIx-1]
+    listRangeTxt = bufferText.slice listStartIx, listEndIx
+    @initialWhitespace = TextManipulation.getLeadingWhitespace listRangeTxt
+    @finalWhitespace = if @initialWhitespace.length is listRangeTxt.length
+                        '' # listRangeTxt is all whitespace, which we take to be the leading whitespace
+                      else
+                        TextManipulation.getTrailingWhitespace(listRangeTxt)
+    listEltsStartIx = listStartIx + @initialWhitespace.length
+    listEltsEndIx   = listEndIx   - @finalWhitespace.length
+    elementRanges = TextManipulation.getElementRangesFromNonNested bufferText, listEltsStartIx, listEltsEndIx, nonNestedIxRanges
+    # TextManipulation.showIxRanges bufferText, elementRanges
+
+    # Computing the layout for all elements is a bit overkill, but can be optimized later, if necessary.
+    @elts =
+        _.map elementRanges, (r) ->
+          new ListElement(bufferText, r)
+
+    @separator = # separator will be null for empty lists and singletons
+      if @elts.length <= 1
+        null
+      else
+        sepLeadingWhitespace = @elts[0].trailingWhitespace
+        sepChar = bufferText[@elts[1].start-1]
+        sepTrailingWhitespace = @elts[1].leadingWhitespace
+        {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace}
+
+ElementList.getElementList = (bufferText, ignoreRanges, ixRange) ->
+    containingList = TextManipulation.getListContainingRange bufferText, ignoreRanges, ixRange
+    if containingList?
+      new ElementList(bufferText, containingList)
     else
-      {listRange: [listStartIx,listEndIx], nonNestedRanges: nonNestedIxRanges} = containingList
-      listRangeTxt = bufferText.slice listStartIx, listEndIx
-      initialWhitespace = @getLeadingWhitespace listRangeTxt
-      finalWhitespace = if initialWhitespace.length is listRangeTxt.length
-                          '' # listRangeTxt is all whitespace, which we take to be the leading whitespace
-                        else
-                          @getTrailingWhitespace(listRangeTxt)
-      listEltsStartIx = listStartIx + initialWhitespace.length
-      listEltsEndIx   = listEndIx   - finalWhitespace.length
-      elementRanges = @getElementRangesFromNonNested bufferText, listEltsStartIx, listEltsEndIx, nonNestedIxRanges
-      # @showIxRanges bufferText, elementRanges
-      listElements =
-          _.map elementRanges, (r) ->
-            new ListElement(bufferText, r)
+      null
 
-      separator =
-        if listElements.length <= 1
-          null
-        else
-          sepLeadingWhitespace = listElements[0].trailingWhitespace
-          sepChar = bufferText[listElements[1].start-1]
-          sepTrailingWhitespace = listElements[1].leadingWhitespace
-          {leadingWhitespace: sepLeadingWhitespace, sepChar: sepChar, trailingWhitespace: sepTrailingWhitespace}
 
-      # sep will be null for empty lists and singletons
-      { startIx: listStartIx, endIx: listEndIx # start and end of the range inside the brackets
-      , openBracket: bufferText[listStartIx-1]
-      , initialWhitespace: initialWhitespace   # whitespace trailing opening bracket
-      , finalWhitespace:   finalWhitespace     # whitespace leading closing bracket
-      , separator: separator                   # {leadingWhitespace: string, sepChar: string, trailingWhitespace: string}
-      , elts: listElements
-      }
+module.exports = TextManipulation =
+  ElementList: ElementList
 
   # Get inner range and non-nested subranges for nearest enclosing list that contains
   # both range start and range end (which may be at different depth levels).
