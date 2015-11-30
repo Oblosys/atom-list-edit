@@ -22,7 +22,6 @@ class ListElement
     @eltEnd = @end - @trailingWhitespace.length
     @strippedElement = bufferText.slice @eltStart, @eltEnd
 
-  # TODO: Override toString? Could be confusing.
   show: ->
     'ListElement: [' + @start + ' - ' + @end + '> ' +
       'stripped: [' + @eltStart + ' - ' + @eltEnd + '> : ' +

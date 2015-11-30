@@ -3,7 +3,6 @@ _ = require 'underscore-plus'
 TextManipulation = require './text-manipulation'
 
 
-module.exports =
 module.exports = ListEdit =
   subscriptions: null
 
@@ -24,25 +23,25 @@ module.exports = ListEdit =
   serialize: ->
 
   selectCmd: ->
-    console.log 'Executing command list-edit-select'
+    # console.log 'Executing command list-edit-select'
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, {elts: listElements}, [selStart,selEnd]) ->
       if listElements.length == 0
         atom.notifications.addWarning 'List select in empty list.'
       else
-        console.log 'List elements'
-        console.log e.show() for e in listElements
-        console.log "Selection: [#{selStart},#{selEnd}>"
+        # console.log 'List elements'
+        # console.log e.show() for e in listElements
+        # console.log "Selection: [#{selStart},#{selEnd}>"
         if selStart == selEnd
           atom.notifications.addWarning 'Empty list selection.'
           # TODO: on empty, expand selection?
         else
-          console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
+          # console.log (TextManipulation.getRangeForIxRange textBuffer, [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
           editor.setSelectedBufferRange(TextManipulation.getRangeForIxRange textBuffer,
                                           [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
   copyCmd: ->
-    console.log 'Executing command list-edit-copy'
+    # console.log 'Executing command list-edit-copy'
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
       { startIx: listStartIx, endIx: listEndIx
       , openBracket: openBracket, separator: separator
@@ -58,14 +57,14 @@ module.exports = ListEdit =
         else
           selectionText = bufferText.slice listElements[selStart].eltStart, listElements[selEnd-1].eltEnd
           # Clip includes separators, which seems logical when we use it for a non-list paste
-          #console.log "Copied: '#{selectionText}'"
-          console.log 'Separator: ' + JSON.stringify separator
+          # console.log "Copied: '#{selectionText}'"
+          # console.log 'Separator: ' + JSON.stringify separator
           atom.clipboard.write selectionText, @mkListEditMeta elementList, selStart, selEnd
           editor.setSelectedBufferRange (TextManipulation.getRangeForIxRange textBuffer,
                                            [listElements[selStart].eltStart, listElements[selEnd-1].eltEnd])
 
   cutCmd: ->
-    console.log 'Executing command list-edit-cut'
+    # console.log 'Executing command list-edit-cut'
     @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [cutStart, cutEnd]) ->
       { startIx: listStartIx, endIx: listEndIx
       , openBracket: openBracket, separator: separator
@@ -115,7 +114,7 @@ module.exports = ListEdit =
           textBuffer.delete cutRange
 
   pasteCmd: ->
-    console.log 'Executing command list-edit-paste'
+    # console.log 'Executing command list-edit-paste'
     clip = atom.clipboard.readWithMetadata()
     clipMeta = @getListEditMeta clip
     if not clipMeta
@@ -124,8 +123,8 @@ module.exports = ListEdit =
     else
       @withSelectedList (editor, textBuffer, bufferText, selectionIxRange, elementList, [selStart,selEnd]) ->
         {startIx: listStartIx, endIx: listEndIx, openBracket: openBracket, separator: separator, elts: listElements} = elementList
-        console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
-        console.log "Opening bracket: #{openBracket}, separator: #{JSON.stringify separator}, clip separator: #{JSON.stringify clip?.separator}"
+        # console.log "About to list-paste \"#{clip.text}\" at selection [#{selStart},#{selEnd}>"
+        # console.log "Opening bracket: #{openBracket}, separator: #{JSON.stringify separator}, clip separator: #{JSON.stringify clip?.separator}"
 
         separator ?= if clipMeta.openBracket == openBracket and clipMeta.separator
                        usingDefaultSep = false
@@ -135,7 +134,7 @@ module.exports = ListEdit =
                      else
                        usingDefaultSep = true # may still be set to false below
                        defaultSepChar = TextManipulation.getDefaultSeparatorFor openBracket
-                       console.log 'Using default separator for \'' + openBracket + '\''
+                      #  console.log 'Using default separator for \'' + openBracket + '\''
                        # TODO: Guess whitespace based on layout of brackets? (horizontal/vertical)
                        #       Put default whitespace in configuration?
                        {leadingWhitespace: '', sepChar: defaultSepChar, trailingWhitespace: ' '}
@@ -156,19 +155,15 @@ module.exports = ListEdit =
         else
           # empty target range
           if listElements.length == 0
-            console.log 'Paste in empty list'
             pasteIxRange = [listStartIx, listEndIx]
             pasteText = clipMeta.initialWhitespace + clipEltsText + clipMeta.finalWhitespace
             usingDefaultSep = false
           else
-            console.log 'Paste on non-empty list'
             if selStart < listElements.length
-              console.log '  not after last element'
               pasteIxRange = [listElements[selStart].eltStart,listElements[selStart].eltStart] # immediately in front of following element
               pasteText = clipEltsText + sepLeadingWhitespace + sepChar + sepTrailingWhitespace
               usingDefaultSep &&= true
             else
-              console.log '  after last element'
               pasteIxRange = [listElements[selStart-1].eltEnd,listElements[selStart-1].eltEnd] # immediately in after of preceding element
               pasteText = sepLeadingWhitespace + sepChar + sepTrailingWhitespace + clipEltsText
               usingDefaultSep &&= true
@@ -227,12 +222,10 @@ module.exports = ListEdit =
     grammar = editor.getGrammar()
     ignoredScopeIds = []
     for scope, scopeId of grammar.registry.idsByScope # TODO: is this how we should access the GrammarRegistry?
-      # console.log scopeId + ': ' + scope
       if (_.some @ignoreScopes, (skipScope) -> return scope == skipScope || scope.startsWith skipScope)
         ignoredScopeIds.push scopeId
 
     lines = bufferText.split('\n')
-    # console.log  JSON.stringify grammar.tokenizeLines bufferText
     ignoredRanges = []
     currentIgnoreRanges = []
     inIgnoreRange = false
@@ -258,13 +251,10 @@ module.exports = ListEdit =
           tagId = if isOpenTag then tag else tag + 1
           if _.contains ignoredScopeIds, tagId
             if isOpenTag
-              # console.log 'Open ignored scope id: ' + tagId
               currentIgnoreRanges.push tagId
             else
-              # console.log 'Close ignored scope id: ' + tagId
               currentIgnoreRanges.pop() # Scopes will be nested correctly, so we can simply pop the last one
         else
-          # console.log 'content: ' + tag + '   ' + currentIgnoreRanges
           if currentIgnoreRanges.length > 0
             if not inIgnoreRange
               startOfIgnoreRange = bufferIx
@@ -296,8 +286,3 @@ module.exports = ListEdit =
 # Modules can be required for easily testing functions in console: (can be put in init.coffee)
 # edit = require ('/Users/martijn/git/atom-list-edit/lib/list-edit.coffee')
 # text = require ('/Users/martijn/git/atom-list-edit/lib/text-manipulation.coffee')
-
-# Some test lists:
-# [1,[1,2,[ ,, ]]]
-# [dsd,[kdd], "ddd"]
-# [ Blinky, Inky, [some, inner, nesting], Pinky,[ j] ,kjl, (1,2,3), jkj]
