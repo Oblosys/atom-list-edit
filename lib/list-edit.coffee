@@ -2,8 +2,7 @@
 _ = require 'underscore-plus'
 TextManipulation = require './text-manipulation'
 
-
-module.exports = ListEdit =
+ListEdit = module.exports =
   subscriptions: null
 
   activate: (state) ->

@@ -75,7 +75,7 @@ ElementList.getElementList = (bufferText, ignoreRanges, ixRange) ->
       null
 
 
-module.exports = TextManipulation =
+TextManipulation = module.exports =
   ElementList: ElementList
 
   # Get inner range and non-nested subranges for nearest enclosing list that contains
