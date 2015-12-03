@@ -187,7 +187,7 @@ ListEdit = module.exports =
         atom.notifications.addWarning 'Selection is not in well-formed list.'
       else
         listSelection = TextManipulation.getSelectionForRange elementList.elts, selectionIxRange
-        if listSelection.end > elementList.elts.length
+        if listSelection[1] > elementList.elts.length
           atom.notifications.addError 'INTERNAL ERROR: list selection end outside list.'
           # Note: Will not occur, just for easily signaling bugs during development.
         else
