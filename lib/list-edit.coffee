@@ -79,7 +79,6 @@ ListEdit = module.exports =
       if listElements.length == 0
         atom.notifications.addWarning 'List cut in empty list.'
       else
-        # TODO: refactor copy so we can call it here
         if cutStart == cutEnd
           atom.notifications.addWarning 'Empty list selection.'
           # TODO: on empty, expand selection?
@@ -232,9 +231,9 @@ ListEdit = module.exports =
   ###*
    * Create clipboard metadata object.
    *
-   * @param  {ElementList} elementList Source element list for the clip.
-   * @param  {number} selStart    Buffer-text index of start of selection.
-   * @param  {number} selEnd      Buffer-text index of end of selection.
+   * @param  {ElementList} elementList - Source element list for the clip.
+   * @param  {number}      selStart    - Buffer-text index of start of selection.
+   * @param  {number}      selEnd      - Buffer-text index of end of selection.
    * @return {ListEditMeta}
   ###
   mkListEditMeta: (elementList, selStart, selEnd) ->
